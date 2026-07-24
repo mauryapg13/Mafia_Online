@@ -871,53 +871,103 @@ body.night .target-card.selected {
   .settings-panel { flex: 1; }
 }
 
-/* ── Village Grid (Persistent) ────────────────────────────────────────── */
+/* ── Village Grid ────────────────────────────────────────── */
 
 .village-grid-container {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  width: 100%;
+  max-width: 860px;
+  margin: 2rem auto 2rem auto;
   padding: 1.5rem;
-  background: var(--bg);
-  border-top: 2px solid var(--line);
-  z-index: 100;
+  background: var(--card);
+  border: 2px solid var(--line);
+  border-radius: var(--radius-lg);
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: var(--shadow-sm);
   transition: background var(--speed), border-color var(--speed);
-  max-height: 40vh;
-  overflow-y: auto;
 }
 
 body.night .village-grid-container {
-  background: var(--night-bg);
+  background: var(--night-card);
+  border-color: var(--line);
+}
+
+.grid-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--line);
+}
+
+.grid-header h3 {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.grid-status-hint {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--blue);
+}
+
+body.night .grid-status-hint {
+  color: var(--yellow);
 }
 
 .village-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
   gap: 1rem;
   width: 100%;
-  max-width: 800px;
 }
 
 .village-card {
   position: relative;
-  background: var(--card);
+  background: var(--bg);
   border: 2px solid var(--line);
   border-radius: var(--radius);
-  padding: 0.8rem;
+  padding: 1rem 0.75rem;
   text-align: center;
   transition: all var(--speed);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 80px;
+  min-height: 110px;
 }
 
 body.night .village-card {
-  background: var(--night-card);
+  background: var(--night-bg);
+}
+
+.village-card.is-me {
+  border-color: var(--blue);
+}
+
+.player-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--blue-bg);
+  color: var(--blue);
+  font-weight: 900;
+  font-size: 1.05rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+body.night .player-avatar {
+  background: rgba(0, 85, 218, 0.25);
+  color: #7DAFFF;
 }
 
 .village-card .player-name {
@@ -925,72 +975,73 @@ body.night .village-card {
   font-size: 0.95rem;
   color: var(--text);
   word-break: break-word;
+  line-height: 1.25;
 }
 
-.village-card .player-role {
-  font-size: 0.75rem;
-  font-weight: 700;
+.village-card .player-status {
+  font-size: 0.7rem;
+  font-weight: 800;
   text-transform: uppercase;
-  margin-top: 0.2rem;
-  color: var(--text-dim);
+  margin-top: 0.35rem;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+}
+
+.player-status.alive-tag {
+  background: var(--green-bg);
+  color: var(--green);
+}
+
+.player-status.dead-tag {
+  background: var(--red-bg);
+  color: var(--red);
 }
 
 .village-card.is-dead {
-  opacity: 0.4;
-  background: var(--gray-100);
+  opacity: 0.45;
+  filter: grayscale(80%);
   border-style: dashed;
 }
 
-body.night .village-card.is-dead {
-  background: var(--night-bg);
-}
-
-.village-card.is-ready {
-  border-color: var(--green);
-  box-shadow: 0 0 0 3px rgba(0, 198, 141, 0.2);
-}
-
-/* Clickable state during Night/Vote */
-body.phase-night .village-card:not(.is-dead),
-body.phase-vote .village-card:not(.is-dead) {
+/* Clickable state */
+.village-card.clickable {
   cursor: pointer;
 }
-body.phase-night .village-card:not(.is-dead):hover,
-body.phase-vote .village-card:not(.is-dead):hover {
-  transform: translateY(-2px);
+
+.village-card.clickable:hover {
+  transform: translateY(-3px);
   border-color: var(--blue);
+  box-shadow: var(--shadow-md);
 }
 
 .village-card.disabled {
   pointer-events: none;
-  opacity: 0.6;
+  opacity: 0.55;
 }
 
-body.phase-night .village-card.selected,
-body.phase-vote .village-card.selected {
-  border-color: var(--red);
-  background: var(--red-bg);
+.village-card.selected {
+  border-color: var(--red) !important;
+  background: var(--red-bg) !important;
+  transform: scale(1.03);
 }
 
-body.night.phase-night .village-card.selected,
-body.night.phase-vote .village-card.selected {
-  border-color: var(--yellow);
-  background: rgba(255, 212, 0, 0.15);
+body.night .village-card.selected {
+  border-color: var(--yellow) !important;
+  background: rgba(255, 212, 0, 0.18) !important;
 }
 
-/* Live Votes Indicator */
-.vote-tokens {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  justify-content: center;
-  margin-top: 0.5rem;
-}
-.vote-token {
-  width: 12px;
-  height: 12px;
+/* Vote count badge on card */
+.vote-count-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
   background: var(--red);
-  border-radius: 50%;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 900;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  box-shadow: 0 2px 6px rgba(255, 0, 82, 0.4);
   animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
@@ -1006,11 +1057,13 @@ body.night.phase-vote .village-card.selected {
   align-items: center;
   gap: 0.75rem;
   margin-top: 1.5rem;
+  width: 100%;
+  max-width: 400px;
 }
 
 .readiness-bar {
   width: 100%;
-  height: 10px;
+  height: 12px;
   background: var(--line);
   border-radius: var(--radius-pill);
   overflow: hidden;
@@ -1024,12 +1077,7 @@ body.night.phase-vote .village-card.selected {
 }
 
 .readiness-text {
-  font-size: 0.85rem;
-  color: var(--text-dim);
+  font-size: 0.9rem;
+  color: var(--text);
   font-weight: 700;
-}
-
-/* Adjust screens to not overlap with bottom grid */
-.screen {
-  padding-bottom: 40vh; 
 }

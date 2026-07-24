@@ -12,10 +12,8 @@
 </head>
 <body>
 
-  <!-- ── Persistent Village Grid ── -->
-  <div id="village-grid-container" class="village-grid-container" style="display:none;">
-    <div id="village-grid" class="village-grid"></div>
-  </div>
+  <!-- ── App Container ── -->
+  <div class="app-container">
 
   <!-- ── Welcome / Join Screen ── -->
   <div id="screen-welcome" class="screen active">
@@ -265,6 +263,17 @@
       <p id="gameover-wait" class="waiting-text" style="display:none;">Waiting for host...</p>
     </div>
   </div>
+
+  <!-- ── In-Flow Village Grid Section ── -->
+  <div id="village-grid-container" class="village-grid-container" style="display:none;">
+    <div class="grid-header">
+      <h3>The Village</h3>
+      <span id="grid-status-hint" class="grid-status-hint"></span>
+    </div>
+    <div id="village-grid" class="village-grid"></div>
+  </div>
+
+  </div> <!-- /.app-container -->
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="app.js"></script>

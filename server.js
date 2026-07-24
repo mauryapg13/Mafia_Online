@@ -395,6 +395,10 @@ io.on('connection', (socket) => {
 
     room.votes[player.id] = targetId;
 
+    const alivePlayers = getAlivePlayers(room);
+    const voteCount = Object.keys(room.votes).length;
+    const aliveCount = alivePlayers.length;
+
     // Broadcast vote tally dynamically
     io.to(room.code).emit('voteProgress', { 
       votes: room.votes, 

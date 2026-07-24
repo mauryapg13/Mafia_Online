@@ -286,7 +286,9 @@
         break;
     }
 
-    if (state.phase !== 'lobby' && state.phase !== 'welcome') {
+    // Only show village grid on active gameplay screens (NOT welcome, lobby, roleReveal, or gameOver)
+    const activeGridPhases = ['night', 'day', 'vote', 'voteResult', 'dayResult'];
+    if (activeGridPhases.includes(state.phase)) {
       $('#village-grid-container').style.display = 'flex';
       renderVillageGrid(state.nightTargets);
     } else {
@@ -664,18 +666,34 @@
 
   // ─── Village Grid ──────────────────────────────────────────────────
 
+  // ─── Village Grid ──────────────────────────────────────────────────
+
   function renderVillageGrid(nightTargets = null) {
     const grid = $('#village-grid');
+    const statusHint = $('#grid-status-hint');
     if (!grid) return;
     
     grid.innerHTML = '';
+    if (statusHint) statusHint.textContent = '';
     
     // Calculate live votes for each player
     const voteCounts = {};
     for (const voter in state.liveVotes) {
       const targetId = state.liveVotes[voter];
-      if (targetId !== 'skip') {
+      if (targetId && targetId !== 'skip') {
         voteCounts[targetId] = (voteCounts[targetId] || 0) + 1;
+      }
+    }
+
+    const me = state.players.find(player => player.id === state.playerId);
+    const amAlive = me ? me.alive : false;
+
+    // Hint text setup
+    if (statusHint) {
+      if (state.phase === 'vote') {
+        statusHint.textContent = state.hasVoted ? 'Vote submitted' : 'Click a player to vote';
+      } else if (state.phase === 'night' && nightTargets && !state.hasActed) {
+        statusHint.textContent = 'Select your target below';
       }
     }
 
@@ -683,77 +701,86 @@
       const card = document.createElement('div');
       card.className = 'village-card';
       if (!p.alive) card.classList.add('is-dead');
+      if (p.id === state.playerId) card.classList.add('is-me');
       
+      // Avatar Circle
+      const avatar = document.createElement('div');
+      avatar.className = 'player-avatar';
+      avatar.textContent = (p.name || '?').charAt(0).toUpperCase();
+      card.appendChild(avatar);
+
       // Name
       const nameEl = document.createElement('div');
       nameEl.className = 'player-name';
-      nameEl.textContent = p.name;
+      nameEl.textContent = p.name + (p.id === state.playerId ? ' (You)' : '');
       card.appendChild(nameEl);
       
-      // Role (if dead and revealed)
-      if (!p.alive && p.role) {
-        const roleEl = document.createElement('div');
-        roleEl.className = 'player-role';
-        roleEl.textContent = p.role;
-        card.appendChild(roleEl);
+      // Status tag
+      const statusEl = document.createElement('div');
+      statusEl.className = 'player-status';
+      if (!p.alive) {
+        statusEl.textContent = p.role ? `Dead (${capitalize(p.role)})` : 'Eliminated';
+        statusEl.classList.add('dead-tag');
+      } else {
+        statusEl.textContent = 'Alive';
+        statusEl.classList.add('alive-tag');
       }
+      card.appendChild(statusEl);
       
-      // Live votes tokens
+      // Live vote count badge
       if (state.phase === 'vote' && voteCounts[p.id]) {
-        const tokensEl = document.createElement('div');
-        tokensEl.className = 'vote-tokens';
-        for (let i = 0; i < voteCounts[p.id]; i++) {
-          const token = document.createElement('div');
-          token.className = 'vote-token';
-          tokensEl.appendChild(token);
-        }
-        card.appendChild(tokensEl);
+        const badge = document.createElement('div');
+        badge.className = 'vote-count-badge';
+        badge.textContent = `${voteCounts[p.id]} vote${voteCounts[p.id] > 1 ? 's' : ''}`;
+        card.appendChild(badge);
       }
 
       // Interaction Logic
       card.dataset.id = p.id;
-      
-      const me = state.players.find(player => player.id === state.playerId);
-      const amAlive = me ? me.alive : false;
 
       if (p.alive && amAlive) {
+        // VOTE PHASE INTERACTION
         if (state.phase === 'vote' && p.id !== state.playerId) {
+          card.classList.add('clickable');
+          if (state.hasVoted) card.classList.add('disabled');
+
           card.addEventListener('click', () => {
             if (state.hasVoted) return;
             state.hasVoted = true;
 
-            grid.querySelectorAll('.village-card').forEach(c => c.classList.remove('selected'));
+            grid.querySelectorAll('.village-card').forEach(c => {
+              c.classList.remove('selected');
+              c.classList.add('disabled');
+            });
             card.classList.add('selected');
 
             socket.emit('castVote', { targetId: p.id });
-            $('#vote-chosen').textContent = 'Vote cast. Waiting for others...';
+            $('#vote-chosen').textContent = `You voted for ${p.name}. Waiting for others...`;
             $('#vote-chosen').style.display = 'block';
             $('#btn-skip-vote').style.display = 'none';
-
-            grid.querySelectorAll('.village-card').forEach(c => {
-              if (!c.classList.contains('selected')) c.classList.add('disabled');
-            });
           });
         }
         
+        // NIGHT PHASE INTERACTION
         if (state.phase === 'night' && nightTargets && !state.hasActed) {
-          // Check if this player is a valid target
           const isTarget = nightTargets.some(t => t.id === p.id);
           if (isTarget) {
+            card.classList.add('clickable', 'targetable');
+            if (state.hasActed) card.classList.add('disabled');
+
             card.addEventListener('click', () => {
               if (state.hasActed) return;
               state.hasActed = true;
 
-              grid.querySelectorAll('.village-card').forEach(c => c.classList.remove('selected'));
+              grid.querySelectorAll('.village-card').forEach(c => {
+                c.classList.remove('selected');
+                c.classList.add('disabled');
+              });
               card.classList.add('selected');
 
               socket.emit('nightAction', { targetId: p.id });
-              $('#night-chosen').textContent = 'Your choice has been made. Waiting for others...';
+              $('#night-chosen').textContent = `Target chosen: ${p.name}. Waiting for others...`;
               $('#night-chosen').style.display = 'block';
-
-              grid.querySelectorAll('.village-card').forEach(c => {
-                if (!c.classList.contains('selected')) c.classList.add('disabled');
-              });
             });
           }
         }
