@@ -961,6 +961,11 @@ body.phase-vote .village-card:not(.is-dead):hover {
   border-color: var(--blue);
 }
 
+.village-card.disabled {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
 body.phase-night .village-card.selected,
 body.phase-vote .village-card.selected {
   border-color: var(--red);

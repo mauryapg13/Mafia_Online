@@ -23,6 +23,7 @@
     hasVoted: false,
     hasActed: false,
     liveVotes: {}, // To track votes during vote phase
+    nightTargets: null, // Persist night targets across phaseChange
   };
 
   // ─── DOM Helpers ───────────────────────────────────────────────────
@@ -241,6 +242,10 @@
 
   socket.on('phaseChange', (data) => {
     state.phase = data.phase;
+    
+    // Update body class for phases
+    document.body.classList.remove('phase-lobby', 'phase-roleReveal', 'phase-night', 'phase-day', 'phase-vote', 'phase-gameOver', 'phase-voteResult', 'phase-dayResult');
+    document.body.classList.add(`phase-${data.phase}`);
 
     switch (data.phase) {
       case 'roleReveal':
@@ -275,6 +280,7 @@
         state.hasVoted = false;
         state.hasActed = false;
         state.liveVotes = {};
+        state.nightTargets = null;
         $('#village-grid-container').style.display = 'none';
         enterLobby();
         break;
@@ -282,7 +288,7 @@
 
     if (state.phase !== 'lobby' && state.phase !== 'welcome') {
       $('#village-grid-container').style.display = 'flex';
-      renderVillageGrid();
+      renderVillageGrid(state.nightTargets);
     } else {
       $('#village-grid-container').style.display = 'none';
     }
@@ -381,7 +387,8 @@
     }
 
     // Targets are now handled via the persistent grid
-    renderVillageGrid(data.targets);
+    state.nightTargets = data.targets;
+    renderVillageGrid(state.nightTargets);
   });
 
   // Mafia sees other mafia selections in real time
@@ -705,8 +712,11 @@
 
       // Interaction Logic
       card.dataset.id = p.id;
+      
+      const me = state.players.find(player => player.id === state.playerId);
+      const amAlive = me ? me.alive : false;
 
-      if (p.alive) {
+      if (p.alive && amAlive) {
         if (state.phase === 'vote' && p.id !== state.playerId) {
           card.addEventListener('click', () => {
             if (state.hasVoted) return;
