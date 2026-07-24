@@ -238,13 +238,27 @@ io.on('connection', (socket) => {
     const room = rooms.get(code);
 
     if (!room) return callback({ success: false, error: 'Room not found.' });
+
+    // Check if existing player is reconnecting
+    let player = room.players.find(p => p.name.toLowerCase() === (playerName || '').trim().toLowerCase());
+    if (player) {
+      player.socketId = socket.id;
+      player.connected = true;
+      socket.join(code);
+      
+      callback({ success: true, playerId: player.id, roomCode: code });
+      io.to(code).emit('lobbyUpdate', {
+        players: publicPlayerList(room),
+        settings: room.settings,
+      });
+      return;
+    }
+
     if (room.phase !== 'lobby') return callback({ success: false, error: 'Game already in progress.' });
-    if (room.players.some(p => p.name.toLowerCase() === playerName.trim().toLowerCase()))
-      return callback({ success: false, error: 'Name already taken.' });
-    if (playerName.trim().length < 1 || playerName.trim().length > 20)
+    if (!playerName || playerName.trim().length < 1 || playerName.trim().length > 20)
       return callback({ success: false, error: 'Name must be 1-20 characters.' });
 
-    const player = {
+    player = {
       id: `p_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
       socketId: socket.id,
       name: playerName.trim(),
