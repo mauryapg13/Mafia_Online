@@ -302,17 +302,14 @@ io.on('connection', (socket) => {
 
     // Send each player their role privately
     for (const player of room.players) {
-      const sock = io.sockets.sockets.get(player.socketId);
-      if (sock) {
-        sock.emit('roleAssigned', {
-          playerId: player.id,
-          role: player.role,
-          // Mafia members see each other
-          mafiaMembers: player.role === 'mafia'
-            ? room.players.filter(p => p.role === 'mafia' && p.id !== player.id).map(p => ({ id: p.id, name: p.name }))
-            : [],
-        });
-      }
+      io.to(player.socketId).emit('roleAssigned', {
+        playerId: player.id,
+        role: player.role,
+        // Mafia members see each other
+        mafiaMembers: player.role === 'mafia'
+          ? room.players.filter(p => p.role === 'mafia' && p.id !== player.id).map(p => ({ id: p.id, name: p.name }))
+          : [],
+      });
     }
 
     // Tell host too
@@ -356,8 +353,7 @@ io.on('connection', (socket) => {
       // Notify other mafia about the selection
       const mafiaPlayers = getAliveByRole(room, 'mafia');
       for (const m of mafiaPlayers) {
-        const sock = io.sockets.sockets.get(m.socketId);
-        if (sock) sock.emit('mafiaSelection', { selectedBy: player.name, targetId });
+        io.to(m.socketId).emit('mafiaSelection', { selectedBy: player.name, targetId });
       }
     }
 
@@ -469,11 +465,7 @@ io.on('connection', (socket) => {
     if (idx === -1) return;
 
     const kicked = room.players.splice(idx, 1)[0];
-    const kickedSocket = io.sockets.sockets.get(kicked.socketId);
-    if (kickedSocket) {
-      kickedSocket.emit('kicked');
-      kickedSocket.leave(room.code);
-    }
+    io.to(kicked.socketId).emit('kicked');
 
     io.to(room.code).emit('lobbyUpdate', {
       players: publicPlayerList(room),
@@ -548,16 +540,14 @@ function startNight(room) {
   // Send night prompts
   for (const player of room.players) {
     if (!player.alive) continue;
-    const sock = io.sockets.sockets.get(player.socketId);
-    if (!sock) continue;
 
     if (player.role === 'mafia') {
       const targets = room.players.filter(p => p.alive && p.role !== 'mafia').map(p => ({ id: p.id, name: p.name }));
       // On first night, check firstNightKill setting
       if (room.round === 1 && !room.settings.firstNightKill) {
-        sock.emit('nightPrompt', { role: 'mafia', targets: [], skipNight: true, round: room.round });
+        io.to(player.socketId).emit('nightPrompt', { role: 'mafia', targets: [], skipNight: true, round: room.round });
       } else {
-        sock.emit('nightPrompt', { role: 'mafia', targets, skipNight: false, round: room.round });
+        io.to(player.socketId).emit('nightPrompt', { role: 'mafia', targets, skipNight: false, round: room.round });
       }
     } else if (player.role === 'healer') {
       let targets = room.players.filter(p => p.alive).map(p => ({ id: p.id, name: p.name }));
@@ -569,9 +559,9 @@ function startNight(room) {
       if (room.lastHealerTarget) {
         targets = targets.filter(t => t.id !== room.lastHealerTarget);
       }
-      sock.emit('nightPrompt', { role: 'healer', targets, skipNight: false, round: room.round });
+      io.to(player.socketId).emit('nightPrompt', { role: 'healer', targets, skipNight: false, round: room.round });
     } else {
-      sock.emit('nightPrompt', { role: 'villager', targets: [], skipNight: false, round: room.round });
+      io.to(player.socketId).emit('nightPrompt', { role: 'villager', targets: [], skipNight: false, round: room.round });
     }
   }
 

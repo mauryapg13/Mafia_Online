@@ -313,19 +313,19 @@
     $('#btn-role-ack').style.display = 'none';
     $('#role-waiting').style.display = 'none';
 
-    const info = ROLE_INFO[state.role];
-    if (!info) return;
+    const role = state.role || 'villager';
+    const info = ROLE_INFO[role] || ROLE_INFO.villager;
 
     const icon = $('#role-icon');
     icon.className = 'role-icon ' + info.iconClass;
     icon.innerHTML = info.iconSvg;
 
     $('#role-name').textContent = info.name;
-    $('#role-name').className = 'role-name ' + state.role;
+    $('#role-name').className = 'role-name ' + role;
     $('#role-team').textContent = 'Team ' + info.team;
     $('#role-description').textContent = info.description;
 
-    if (state.role === 'mafia' && state.mafiaMembers.length > 0) {
+    if (role === 'mafia' && state.mafiaMembers.length > 0) {
       const names = state.mafiaMembers.map(m => m.name).join(', ');
       $('#role-mafia-allies').textContent = 'Your allies: ' + names;
       $('#role-mafia-allies').style.display = 'block';
@@ -334,13 +334,12 @@
     }
 
     // Tap to flip
-    card.addEventListener('click', function flipHandler() {
+    card.onclick = function flipHandler() {
       card.classList.add('flipped');
-      card.removeEventListener('click', flipHandler);
       setTimeout(() => {
         $('#btn-role-ack').style.display = 'inline-flex';
-      }, 800);
-    });
+      }, 400);
+    };
   }
 
   $('#btn-role-ack').addEventListener('click', () => {
@@ -362,7 +361,9 @@
     $('#night-skip').style.display = 'none';
     $('#night-chosen').style.display = 'none';
 
-    if (data.role === 'villager') {
+    const role = data.role || state.role || 'villager';
+
+    if (role === 'villager') {
       $('#night-sleep').style.display = 'block';
       $('#night-title').textContent = 'Night falls';
       return;
