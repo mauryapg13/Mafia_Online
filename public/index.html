@@ -29,11 +29,13 @@
       </div>
 
       <div class="welcome-actions">
-        <button id="btn-create-room" class="btn btn-primary">Create Room</button>
-        <div class="divider"><span>or join a game</span></div>
         <div class="join-form">
-          <input type="text" id="input-room-code" class="input" placeholder="Room code" maxlength="4" autocomplete="off" />
           <input type="text" id="input-player-name" class="input" placeholder="Your name" maxlength="20" autocomplete="off" />
+          <button id="btn-create-room" class="btn btn-primary">Create Room</button>
+          
+          <div class="divider"><span>or join a game</span></div>
+          
+          <input type="text" id="input-room-code" class="input" placeholder="Room code" maxlength="4" autocomplete="off" />
           <button id="btn-join-room" class="btn btn-secondary">Join Room</button>
         </div>
         <p id="welcome-error" class="error-text"></p>

@@ -67,11 +67,20 @@
   // ─── Welcome Screen ───────────────────────────────────────────────
 
   $('#btn-create-room').addEventListener('click', () => {
-    socket.emit('createRoom', (res) => {
+    const name = $('#input-player-name').value.trim();
+    if (!name) {
+      $('#welcome-error').textContent = 'Please enter your name first.';
+      return;
+    }
+
+    socket.emit('createRoom', { playerName: name }, (res) => {
       if (res.success) {
         state.isHost = true;
+        state.playerId = res.playerId;
         state.roomCode = res.roomCode;
         enterLobby();
+      } else {
+        $('#welcome-error').textContent = res.error;
       }
     });
   });

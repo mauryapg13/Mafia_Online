@@ -210,10 +210,24 @@ function publicPlayerListWithRoles(room) {
 io.on('connection', (socket) => {
 
   // ── Create Room ──
-  socket.on('createRoom', (callback) => {
+  socket.on('createRoom', ({ playerName }, callback) => {
+    if (!playerName || playerName.trim().length < 1 || playerName.trim().length > 20) {
+      return callback({ success: false, error: 'Name must be 1-20 characters.' });
+    }
+
     const room = createRoom(socket.id);
+    
+    const player = {
+      id: `p_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      socketId: socket.id,
+      name: playerName.trim(),
+      role: null,
+      alive: true,
+      connected: true,
+    };
+    room.players.push(player);
     socket.join(room.code);
-    callback({ success: true, roomCode: room.code });
+    callback({ success: true, roomCode: room.code, playerId: player.id });
   });
 
   // ── Join Room ──
