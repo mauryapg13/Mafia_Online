@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Mafia party game for video calls. Create a room, invite friends, and play the classic social deduction game together online.">
+  <title>Mafia — The Village Sleeps</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- ── Welcome / Join Screen ── -->
+  <div id="screen-welcome" class="screen active">
+    <div class="welcome-wrapper">
+      <div class="brand">
+        <div class="brand-icon">
+          <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="30" cy="30" r="28" stroke="currentColor" stroke-width="2" />
+            <circle cx="30" cy="30" r="12" fill="currentColor" opacity="0.15" />
+            <path d="M30 2C30 2 38 18 38 30C38 42 30 58 30 58" stroke="currentColor" stroke-width="1.5" opacity="0.4" />
+            <path d="M30 2C30 2 22 18 22 30C22 42 30 58 30 58" stroke="currentColor" stroke-width="1.5" opacity="0.4" />
+          </svg>
+        </div>
+        <h1>Mafia</h1>
+        <p class="tagline">The village sleeps tonight</p>
+      </div>
+
+      <div class="welcome-actions">
+        <button id="btn-create-room" class="btn btn-primary">Create Room</button>
+        <div class="divider"><span>or join a game</span></div>
+        <div class="join-form">
+          <input type="text" id="input-room-code" class="input" placeholder="Room code" maxlength="4" autocomplete="off" />
+          <input type="text" id="input-player-name" class="input" placeholder="Your name" maxlength="20" autocomplete="off" />
+          <button id="btn-join-room" class="btn btn-secondary">Join Room</button>
+        </div>
+        <p id="welcome-error" class="error-text"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Lobby Screen ── -->
+  <div id="screen-lobby" class="screen">
+    <div class="lobby-wrapper">
+      <div class="lobby-header">
+        <h2>Game Lobby</h2>
+        <div class="room-code-display">
+          <span class="room-code-label">Room Code</span>
+          <span id="lobby-room-code" class="room-code-value"></span>
+        </div>
+      </div>
+
+      <div class="lobby-body">
+        <div class="lobby-players">
+          <h3>Players</h3>
+          <ul id="player-list" class="player-list"></ul>
+          <p id="player-count" class="subtle-text"></p>
+        </div>
+
+        <div id="settings-panel" class="settings-panel">
+          <h3>Settings</h3>
+          <div class="setting-group">
+            <label class="setting-label" for="setting-mafia-count">Mafia members</label>
+            <div class="setting-control">
+              <button class="btn-step" data-setting="mafiaCount" data-dir="-1">-</button>
+              <span id="setting-mafia-count" class="setting-value">1</span>
+              <button class="btn-step" data-setting="mafiaCount" data-dir="1">+</button>
+            </div>
+          </div>
+          <div class="setting-group">
+            <label class="setting-label" for="setting-healer-count">Healers</label>
+            <div class="setting-control">
+              <button class="btn-step" data-setting="healerCount" data-dir="-1">-</button>
+              <span id="setting-healer-count" class="setting-value">1</span>
+              <button class="btn-step" data-setting="healerCount" data-dir="1">+</button>
+            </div>
+          </div>
+          <div class="setting-group">
+            <label class="setting-label" for="setting-discussion-time">Discussion time</label>
+            <div class="setting-control">
+              <button class="btn-step" data-setting="discussionTime" data-dir="-30">-</button>
+              <span id="setting-discussion-time" class="setting-value">120s</span>
+              <button class="btn-step" data-setting="discussionTime" data-dir="30">+</button>
+            </div>
+          </div>
+          <div class="setting-group">
+            <label class="setting-label">First night kill</label>
+            <button id="setting-first-night-kill" class="btn-toggle active" data-setting="firstNightKill">Yes</button>
+          </div>
+          <div class="setting-group">
+            <label class="setting-label">Reveal role on death</label>
+            <button id="setting-reveal-role" class="btn-toggle active" data-setting="revealRoleOnDeath">Yes</button>
+          </div>
+          <div class="setting-group">
+            <label class="setting-label">Healer self-heal</label>
+            <button id="setting-self-heal" class="btn-toggle" data-setting="allowHealerSelfHeal">No</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="lobby-host-actions" class="lobby-footer" style="display:none;">
+        <button id="btn-start-game" class="btn btn-primary btn-large">Start Game</button>
+        <p id="lobby-error" class="error-text"></p>
+      </div>
+
+      <div id="lobby-player-wait" class="lobby-footer" style="display:none;">
+        <p class="waiting-text">Waiting for the host to start the game...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Role Reveal Screen ── -->
+  <div id="screen-role" class="screen">
+    <div class="role-wrapper">
+      <h2>Your Role</h2>
+      <div id="role-card" class="role-card">
+        <div class="role-card-inner">
+          <div class="role-card-front">
+            <p>Tap to reveal</p>
+          </div>
+          <div class="role-card-back">
+            <div class="role-icon" id="role-icon"></div>
+            <h3 id="role-name" class="role-name"></h3>
+            <p id="role-team" class="role-team"></p>
+            <p id="role-description" class="role-description"></p>
+            <p id="role-mafia-allies" class="role-allies"></p>
+          </div>
+        </div>
+      </div>
+      <button id="btn-role-ack" class="btn btn-primary" style="display:none;">I understand my role</button>
+      <p id="role-waiting" class="waiting-text" style="display:none;">Waiting for other players...</p>
+    </div>
+  </div>
+
+  <!-- ── Night Screen ── -->
+  <div id="screen-night" class="screen">
+    <div class="night-wrapper">
+      <div class="night-header">
+        <h2 id="night-title">Night falls</h2>
+        <p id="night-round" class="round-label"></p>
+      </div>
+
+      <div id="night-action-area" class="night-action-area">
+        <!-- Villager sleeping -->
+        <div id="night-sleep" class="night-sleep" style="display:none;">
+          <div class="sleep-icon">
+            <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="40" cy="40" r="30" stroke="currentColor" stroke-width="2" opacity="0.3"/>
+              <path d="M28 44C28 44 33 38 40 38C47 38 52 44 52 44" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="32" cy="34" r="2" fill="currentColor" opacity="0.5"/>
+              <circle cx="48" cy="34" r="2" fill="currentColor" opacity="0.5"/>
+            </svg>
+          </div>
+          <p class="sleep-text">The village sleeps. Close your eyes and wait for dawn.</p>
+        </div>
+
+        <!-- Mafia / Healer action -->
+        <div id="night-choose" class="night-choose" style="display:none;">
+          <p id="night-prompt" class="night-prompt-text"></p>
+          <div id="night-targets" class="target-grid"></div>
+          <p id="night-chosen" class="chosen-text" style="display:none;"></p>
+        </div>
+
+        <!-- Skip night (first night, no kill) -->
+        <div id="night-skip" class="night-skip" style="display:none;">
+          <p>The first night passes quietly. No one may be harmed tonight.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Day Screen ── -->
+  <div id="screen-day" class="screen">
+    <div class="day-wrapper">
+      <div class="day-header">
+        <h2>Dawn breaks</h2>
+        <p id="day-round" class="round-label"></p>
+      </div>
+
+      <div id="day-result" class="day-result">
+        <p id="day-result-text" class="result-text"></p>
+      </div>
+
+      <div id="day-discussion" class="day-discussion">
+        <h3>Discussion</h3>
+        <p class="subtle-text">Talk it out on your video call. Who seems suspicious?</p>
+        <div class="timer-container">
+          <svg class="timer-ring" viewBox="0 0 120 120">
+            <circle class="timer-track" cx="60" cy="60" r="54" />
+            <circle id="timer-progress" class="timer-fill" cx="60" cy="60" r="54" />
+          </svg>
+          <span id="timer-text" class="timer-text"></span>
+        </div>
+        <button id="btn-start-vote" class="btn btn-secondary">Proceed to vote</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Vote Screen ── -->
+  <div id="screen-vote" class="screen">
+    <div class="vote-wrapper">
+      <h2>Village Vote</h2>
+      <p class="subtle-text">Choose who to eliminate, or skip your vote.</p>
+      <div id="vote-targets" class="target-grid"></div>
+      <button id="btn-skip-vote" class="btn btn-ghost">Skip vote</button>
+      <div id="vote-status" class="vote-status">
+        <p id="vote-progress-text" class="subtle-text"></p>
+      </div>
+      <p id="vote-chosen" class="chosen-text" style="display:none;"></p>
+    </div>
+  </div>
+
+  <!-- ── Vote Result Screen ── -->
+  <div id="screen-vote-result" class="screen">
+    <div class="vote-result-wrapper">
+      <h2>The Village has spoken</h2>
+      <p id="vote-result-text" class="result-text"></p>
+      <div id="vote-tally" class="vote-tally"></div>
+      <button id="btn-proceed-night" class="btn btn-primary" style="display:none;">Proceed to night</button>
+      <p id="vote-result-wait" class="waiting-text" style="display:none;">Waiting for host to continue...</p>
+    </div>
+  </div>
+
+  <!-- ── Game Over Screen ── -->
+  <div id="screen-gameover" class="screen">
+    <div class="gameover-wrapper">
+      <h2 id="gameover-title" class="gameover-title"></h2>
+      <p id="gameover-subtitle" class="gameover-subtitle"></p>
+      <div class="gameover-roles">
+        <h3>All Roles Revealed</h3>
+        <table id="gameover-table" class="roles-table">
+          <thead>
+            <tr><th>Player</th><th>Role</th><th>Fate</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <button id="btn-play-again" class="btn btn-primary" style="display:none;">Play Again</button>
+      <p id="gameover-wait" class="waiting-text" style="display:none;">Waiting for host...</p>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
