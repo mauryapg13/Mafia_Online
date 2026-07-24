@@ -35,12 +35,14 @@ function createRoom(hostSocketId) {
       firstNightKill: true,
       revealRoleOnDeath: true,
       allowHealerSelfHeal: false,
+      revealHealerSave: true,
     },
     players: [],       // { id, socketId, name, role, alive, connected }
     phase: 'lobby',    // lobby | roleReveal | night | day | vote | gameOver
     round: 0,
     nightActions: {},  // { mafia: targetId, healer: targetId }
     votes: {},         // { voterId: targetId }
+    readyPlayers: new Set(),
     eliminationLog: [],
     lastHealerTarget: null,
     winner: null,
@@ -273,6 +275,7 @@ io.on('connection', (socket) => {
     if (newSettings.firstNightKill !== undefined) s.firstNightKill = Boolean(newSettings.firstNightKill);
     if (newSettings.revealRoleOnDeath !== undefined) s.revealRoleOnDeath = Boolean(newSettings.revealRoleOnDeath);
     if (newSettings.allowHealerSelfHeal !== undefined) s.allowHealerSelfHeal = Boolean(newSettings.allowHealerSelfHeal);
+    if (newSettings.revealHealerSave !== undefined) s.revealHealerSave = Boolean(newSettings.revealHealerSave);
 
     io.to(room.code).emit('lobbyUpdate', {
       players: publicPlayerList(room),
@@ -392,10 +395,12 @@ io.on('connection', (socket) => {
 
     room.votes[player.id] = targetId;
 
-    // Broadcast vote count (not who voted for whom)
-    const aliveCount = getAlivePlayers(room).length;
-    const voteCount = Object.keys(room.votes).length;
-    io.to(room.code).emit('voteProgress', { voteCount, totalVoters: aliveCount });
+    // Broadcast vote tally dynamically
+    io.to(room.code).emit('voteProgress', { 
+      votes: room.votes, 
+      voteCount: voteCount, 
+      totalVoters: aliveCount 
+    });
 
     // All votes in?
     if (voteCount >= aliveCount) {
@@ -403,24 +408,51 @@ io.on('connection', (socket) => {
     }
   });
 
-  // ── Host: Start Vote Phase ──
+  // ── Readiness Check ──
+  socket.on('playerReady', () => {
+    const room = findRoomBySocket(socket.id);
+    if (!room) return;
+    
+    const player = getPlayerBySocket(room, socket.id);
+    if (!player || !player.alive) return;
+    
+    room.readyPlayers.add(player.id);
+    
+    const alivePlayers = getAlivePlayers(room);
+    const readyCount = room.readyPlayers.size;
+    const totalAlive = alivePlayers.length;
+    
+    // Find who is not ready
+    const waitingFor = alivePlayers.filter(p => !room.readyPlayers.has(p.id)).map(p => p.name);
+    
+    io.to(room.code).emit('readinessProgress', {
+      readyCount,
+      totalCount: totalAlive,
+      waitingFor
+    });
+    
+    if (readyCount >= totalAlive) {
+      // All ready, transition based on current phase
+      if (room.phase === 'day') {
+        startVotePhase(room);
+      } else if (room.phase === 'voteResult' || room.phase === 'dayResult') {
+        startNight(room);
+      }
+    }
+  });
+
+  // ── Host: Force Start Vote Phase ──
   socket.on('startVote', () => {
     const room = findRoomBySocket(socket.id);
     if (!room || room.phase !== 'day') return;
-    // Allow host or auto-trigger after timer
-    room.phase = 'vote';
-    room.votes = {};
-    io.to(room.code).emit('phaseChange', {
-      phase: 'vote',
-      players: publicPlayerList(room),
-    });
+    startVotePhase(room);
   });
 
-  // ── Host: Proceed to Next Night ──
+  // ── Host: Force Proceed to Next Night ──
   socket.on('proceedToNight', () => {
     const room = findRoomBySocket(socket.id);
     if (!room || room.hostId !== socket.id) return;
-    if (room.phase !== 'day' && room.phase !== 'dayResult') return;
+    if (room.phase !== 'day' && room.phase !== 'dayResult' && room.phase !== 'voteResult') return;
     startNight(room);
   });
 
@@ -458,6 +490,7 @@ io.on('connection', (socket) => {
     room.eliminationLog = [];
     room.lastHealerTarget = null;
     room.winner = null;
+    room.readyPlayers.clear();
     for (const p of room.players) {
       p.role = null;
       p.alive = true;
@@ -504,6 +537,7 @@ function startNight(room) {
   room.round++;
   room.phase = 'night';
   room.nightActions = {};
+  room.readyPlayers.clear();
 
   const alivePlayers = publicPlayerList(room);
 
@@ -544,6 +578,16 @@ function startNight(room) {
   });
 }
 
+function startVotePhase(room) {
+  room.phase = 'vote';
+  room.votes = {};
+  room.readyPlayers.clear();
+  io.to(room.code).emit('phaseChange', {
+    phase: 'vote',
+    players: publicPlayerList(room),
+  });
+}
+
 function checkNightComplete(room) {
   const aliveMafia = getAliveByRole(room, 'mafia');
   const aliveHealers = getAliveByRole(room, 'healer');
@@ -558,6 +602,8 @@ function checkNightComplete(room) {
       const result = resolveNight(room);
       room.phase = 'day';
 
+      const savedPlayer = result.saved ? room.players.find(p => p.id === result.healerTarget) : null;
+
       const dayData = {
         phase: 'day',
         round: room.round,
@@ -569,6 +615,7 @@ function checkNightComplete(room) {
             role: room.settings.revealRoleOnDeath ? result.eliminated.role : null,
           } : null,
           saved: result.saved,
+          savedName: (result.saved && room.settings.revealHealerSave && savedPlayer) ? savedPlayer.name : null,
           firstNightSkipped: room.round === 1 && !room.settings.firstNightKill,
         },
         discussionTime: room.settings.discussionTime,
@@ -586,6 +633,7 @@ function checkNightComplete(room) {
           eliminationLog: room.eliminationLog,
         });
       } else {
+        room.readyPlayers.clear();
         io.to(room.code).emit('phaseChange', dayData);
       }
     }, 1500);
@@ -621,6 +669,8 @@ function resolveVotePhase(room) {
       });
     }, 3000);
   } else {
+    room.phase = 'voteResult';
+    room.readyPlayers.clear();
     io.to(room.code).emit('voteResult', resultData);
   }
 }

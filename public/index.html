@@ -12,6 +12,11 @@
 </head>
 <body>
 
+  <!-- ── Persistent Village Grid ── -->
+  <div id="village-grid-container" class="village-grid-container" style="display:none;">
+    <div id="village-grid" class="village-grid"></div>
+  </div>
+
   <!-- ── Welcome / Join Screen ── -->
   <div id="screen-welcome" class="screen active">
     <div class="welcome-wrapper">
@@ -98,6 +103,9 @@
           <div class="setting-group">
             <label class="setting-label">Healer self-heal</label>
             <button id="setting-self-heal" class="btn-toggle" data-setting="allowHealerSelfHeal">No</button>
+          <div class="setting-group">
+            <label class="setting-label">Reveal healer save</label>
+            <button id="setting-reveal-healer" class="btn-toggle active" data-setting="revealHealerSave">Yes</button>
           </div>
         </div>
       </div>
@@ -161,7 +169,7 @@
         <!-- Mafia / Healer action -->
         <div id="night-choose" class="night-choose" style="display:none;">
           <p id="night-prompt" class="night-prompt-text"></p>
-          <div id="night-targets" class="target-grid"></div>
+          <p class="subtle-text">Select your target from the village grid.</p>
           <p id="night-chosen" class="chosen-text" style="display:none;"></p>
         </div>
 
@@ -195,7 +203,15 @@
           </svg>
           <span id="timer-text" class="timer-text"></span>
         </div>
-        <button id="btn-start-vote" class="btn btn-secondary">Proceed to vote</button>
+        <div class="readiness-container">
+          <button id="btn-ready-vote" class="btn btn-secondary">Ready to vote</button>
+          <div id="day-readiness-bar" class="readiness-bar" style="display:none;">
+            <div id="day-readiness-fill" class="readiness-fill"></div>
+          </div>
+          <p id="day-readiness-text" class="readiness-text" style="display:none;"></p>
+          <!-- Fallback force button for host -->
+          <button id="btn-force-vote" class="btn btn-ghost btn-small" style="display:none;">Force Proceed</button>
+        </div>
       </div>
     </div>
   </div>
@@ -204,8 +220,7 @@
   <div id="screen-vote" class="screen">
     <div class="vote-wrapper">
       <h2>Village Vote</h2>
-      <p class="subtle-text">Choose who to eliminate, or skip your vote.</p>
-      <div id="vote-targets" class="target-grid"></div>
+      <p class="subtle-text">Choose who to eliminate from the village grid, or skip your vote.</p>
       <button id="btn-skip-vote" class="btn btn-ghost">Skip vote</button>
       <div id="vote-status" class="vote-status">
         <p id="vote-progress-text" class="subtle-text"></p>
@@ -220,8 +235,15 @@
       <h2>The Village has spoken</h2>
       <p id="vote-result-text" class="result-text"></p>
       <div id="vote-tally" class="vote-tally"></div>
-      <button id="btn-proceed-night" class="btn btn-primary" style="display:none;">Proceed to night</button>
-      <p id="vote-result-wait" class="waiting-text" style="display:none;">Waiting for host to continue...</p>
+      
+      <div class="readiness-container">
+        <button id="btn-ready-night" class="btn btn-primary">Ready for night</button>
+        <div id="vote-readiness-bar" class="readiness-bar" style="display:none;">
+          <div id="vote-readiness-fill" class="readiness-fill"></div>
+        </div>
+        <p id="vote-readiness-text" class="readiness-text" style="display:none;"></p>
+        <button id="btn-force-night" class="btn btn-ghost btn-small" style="display:none;">Force Proceed</button>
+      </div>
     </div>
   </div>
 

@@ -20,7 +20,9 @@
     players: [],
     discussionTimer: null,
     hasVoted: false,
+    hasVoted: false,
     hasActed: false,
+    liveVotes: {}, // To track votes during vote phase
   };
 
   // ─── DOM Helpers ───────────────────────────────────────────────────
@@ -221,6 +223,12 @@
     const sh = $('#setting-self-heal');
     sh.classList.toggle('active', s.allowHealerSelfHeal);
     sh.textContent = s.allowHealerSelfHeal ? 'Yes' : 'No';
+
+    const rh = $('#setting-reveal-healer');
+    if (rh) {
+      rh.classList.toggle('active', s.revealHealerSave);
+      rh.textContent = s.revealHealerSave ? 'Yes' : 'No';
+    }
   }
 
   // ─── Role Reveal ──────────────────────────────────────────────────
@@ -266,8 +274,25 @@
         state.role = null;
         state.hasVoted = false;
         state.hasActed = false;
+        state.liveVotes = {};
+        $('#village-grid-container').style.display = 'none';
         enterLobby();
         break;
+    }
+
+    if (state.phase !== 'lobby' && state.phase !== 'welcome') {
+      $('#village-grid-container').style.display = 'flex';
+      renderVillageGrid();
+    } else {
+      $('#village-grid-container').style.display = 'none';
+    }
+    
+    // Hide readiness bars on phase change
+    $$('.readiness-bar').forEach(b => b.style.display = 'none');
+    $$('.readiness-text').forEach(t => t.style.display = 'none');
+    
+    if (state.isHost) {
+      $$('#btn-force-vote, #btn-force-night').forEach(b => b.style.display = 'inline-flex');
     }
   });
 
@@ -355,46 +380,14 @@
       $('#night-prompt').textContent = 'Choose someone to protect tonight.';
     }
 
-    renderNightTargets(data.targets);
+    // Targets are now handled via the persistent grid
+    renderVillageGrid(data.targets);
   });
-
-  function renderNightTargets(targets) {
-    const grid = $('#night-targets');
-    grid.innerHTML = '';
-
-    targets.forEach(t => {
-      const card = document.createElement('div');
-      card.className = 'target-card';
-      card.textContent = t.name;
-      card.dataset.id = t.id;
-
-      card.addEventListener('click', () => {
-        if (state.hasActed) return;
-        state.hasActed = true;
-
-        // Highlight selection
-        grid.querySelectorAll('.target-card').forEach(c => c.classList.remove('selected'));
-        card.classList.add('selected');
-
-        socket.emit('nightAction', { targetId: t.id });
-        $('#night-chosen').textContent = 'Your choice has been made. Waiting for others...';
-        $('#night-chosen').style.display = 'block';
-
-        // Disable further clicks
-        grid.querySelectorAll('.target-card').forEach(c => {
-          if (!c.classList.contains('selected')) c.classList.add('disabled');
-        });
-      });
-
-      grid.appendChild(card);
-    });
-  }
 
   // Mafia sees other mafia selections in real time
   socket.on('mafiaSelection', (data) => {
-    // Could highlight the target card — for now just visual feedback
-    const grid = $('#night-targets');
-    const cards = grid.querySelectorAll('.target-card');
+    const grid = $('#village-grid');
+    const cards = grid.querySelectorAll('.village-card');
     cards.forEach(c => {
       if (c.dataset.id === data.targetId) {
         c.classList.add('selected');
@@ -415,7 +408,11 @@
     if (nr.firstNightSkipped) {
       resultEl.innerHTML = 'The first night passed peacefully. No one was harmed.';
     } else if (nr.saved) {
-      resultEl.innerHTML = 'The Healer was vigilant last night. <span class="saved-text">Someone was saved</span> from the Mafia\'s attempt.';
+      if (nr.savedName) {
+        resultEl.innerHTML = `The Healer was vigilant last night. <span class="saved-text">${escapeHtml(nr.savedName)} was saved</span> from the Mafia's attempt.`;
+      } else {
+        resultEl.innerHTML = 'The Healer was vigilant last night. <span class="saved-text">Someone was saved</span> from the Mafia\'s attempt.';
+      }
     } else if (nr.eliminated) {
       let roleText = '';
       if (nr.eliminated.role) {
@@ -460,8 +457,7 @@
       if (remaining <= 0) {
         clearInterval(timerInterval);
         timerInterval = null;
-        // Auto-proceed to vote
-        socket.emit('startVote');
+        // Auto-proceed to vote (for all, or just host can force it. We let the server timeout or host force it)
       }
 
       remaining--;
@@ -471,9 +467,12 @@
     timerInterval = setInterval(updateTimer, 1000);
   }
 
-  $('#btn-start-vote').addEventListener('click', () => {
-    if (timerInterval) clearInterval(timerInterval);
-    timerInterval = null;
+  $('#btn-ready-vote').addEventListener('click', () => {
+    socket.emit('playerReady');
+    $('#btn-ready-vote').style.display = 'none';
+  });
+
+  $('#btn-force-vote').addEventListener('click', () => {
     socket.emit('startVote');
   });
 
@@ -483,42 +482,15 @@
     showScreen('vote');
     $('#vote-chosen').style.display = 'none';
     $('#vote-progress-text').textContent = '';
+    $('#btn-skip-vote').style.display = 'inline-flex';
+    $('#btn-ready-vote').style.display = 'inline-flex'; // Reset for next time
 
-    const grid = $('#vote-targets');
-    grid.innerHTML = '';
-
-    const alivePlayers = state.players.filter(p => p.alive && p.id !== state.playerId);
-
-    alivePlayers.forEach(p => {
-      const card = document.createElement('div');
-      card.className = 'target-card';
-      card.textContent = p.name;
-      card.dataset.id = p.id;
-
-      card.addEventListener('click', () => {
-        if (state.hasVoted) return;
-        state.hasVoted = true;
-
-        grid.querySelectorAll('.target-card').forEach(c => c.classList.remove('selected'));
-        card.classList.add('selected');
-
-        socket.emit('castVote', { targetId: p.id });
-        $('#vote-chosen').textContent = 'Vote cast. Waiting for others...';
-        $('#vote-chosen').style.display = 'block';
-        $('#btn-skip-vote').style.display = 'none';
-
-        grid.querySelectorAll('.target-card').forEach(c => {
-          if (!c.classList.contains('selected')) c.classList.add('disabled');
-        });
-      });
-
-      grid.appendChild(card);
-    });
+    state.liveVotes = {};
+    renderVillageGrid();
 
     // Check if this player is already dead
     const me = state.players.find(p => p.id === state.playerId);
     if (me && !me.alive) {
-      grid.innerHTML = '';
       $('#btn-skip-vote').style.display = 'none';
       $('#vote-chosen').textContent = 'You are no longer among the living. Watching the vote...';
       $('#vote-chosen').style.display = 'block';
@@ -532,11 +504,38 @@
     $('#vote-chosen').textContent = 'You chose to skip. Waiting for others...';
     $('#vote-chosen').style.display = 'block';
     $('#btn-skip-vote').style.display = 'none';
-    $('#vote-targets').querySelectorAll('.target-card').forEach(c => c.classList.add('disabled'));
+    
+    // Disable grid clicks
+    $('#village-grid').querySelectorAll('.village-card').forEach(c => c.classList.add('disabled'));
   });
 
   socket.on('voteProgress', (data) => {
     $('#vote-progress-text').textContent = `${data.voteCount} of ${data.totalVoters} votes cast`;
+    state.liveVotes = data.votes || {};
+    renderVillageGrid(); // Re-render to show live vote tokens
+  });
+
+  socket.on('readinessProgress', (data) => {
+    const barId = state.phase === 'day' ? 'day-readiness-bar' : 'vote-readiness-bar';
+    const fillId = state.phase === 'day' ? 'day-readiness-fill' : 'vote-readiness-fill';
+    const textId = state.phase === 'day' ? 'day-readiness-text' : 'vote-readiness-text';
+    
+    const bar = $(`#${barId}`);
+    const fill = $(`#${fillId}`);
+    const text = $(`#${textId}`);
+    
+    if (bar && fill && text) {
+      bar.style.display = 'block';
+      text.style.display = 'block';
+      const pct = (data.readyCount / data.totalCount) * 100;
+      fill.style.width = `${pct}%`;
+      
+      if (data.waitingFor && data.waitingFor.length > 0 && data.waitingFor.length <= 3) {
+        text.textContent = `Waiting for: ${data.waitingFor.join(', ')}`;
+      } else {
+        text.textContent = `${data.readyCount} / ${data.totalCount} ready`;
+      }
+    }
   });
 
   // ─── Vote Result ───────────────────────────────────────────────────
@@ -576,17 +575,17 @@
       });
     }
 
-    // Host can proceed
-    if (state.isHost) {
-      $('#btn-proceed-night').style.display = 'inline-flex';
-      $('#vote-result-wait').style.display = 'none';
-    } else {
-      $('#btn-proceed-night').style.display = 'none';
-      $('#vote-result-wait').style.display = 'block';
-    }
+    // Everyone needs to be ready, host fallback
+    $('#btn-ready-night').style.display = 'inline-flex';
+    $('#vote-result-wait').style.display = 'none';
   });
 
-  $('#btn-proceed-night').addEventListener('click', () => {
+  $('#btn-ready-night').addEventListener('click', () => {
+    socket.emit('playerReady');
+    $('#btn-ready-night').style.display = 'none';
+  });
+
+  $('#btn-force-night').addEventListener('click', () => {
     socket.emit('proceedToNight');
   });
 
@@ -655,6 +654,104 @@
     showScreen('welcome');
     $('#welcome-error').textContent = 'You were removed from the room.';
   });
+
+  // ─── Village Grid ──────────────────────────────────────────────────
+
+  function renderVillageGrid(nightTargets = null) {
+    const grid = $('#village-grid');
+    if (!grid) return;
+    
+    grid.innerHTML = '';
+    
+    // Calculate live votes for each player
+    const voteCounts = {};
+    for (const voter in state.liveVotes) {
+      const targetId = state.liveVotes[voter];
+      if (targetId !== 'skip') {
+        voteCounts[targetId] = (voteCounts[targetId] || 0) + 1;
+      }
+    }
+
+    state.players.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'village-card';
+      if (!p.alive) card.classList.add('is-dead');
+      
+      // Name
+      const nameEl = document.createElement('div');
+      nameEl.className = 'player-name';
+      nameEl.textContent = p.name;
+      card.appendChild(nameEl);
+      
+      // Role (if dead and revealed)
+      if (!p.alive && p.role) {
+        const roleEl = document.createElement('div');
+        roleEl.className = 'player-role';
+        roleEl.textContent = p.role;
+        card.appendChild(roleEl);
+      }
+      
+      // Live votes tokens
+      if (state.phase === 'vote' && voteCounts[p.id]) {
+        const tokensEl = document.createElement('div');
+        tokensEl.className = 'vote-tokens';
+        for (let i = 0; i < voteCounts[p.id]; i++) {
+          const token = document.createElement('div');
+          token.className = 'vote-token';
+          tokensEl.appendChild(token);
+        }
+        card.appendChild(tokensEl);
+      }
+
+      // Interaction Logic
+      card.dataset.id = p.id;
+
+      if (p.alive) {
+        if (state.phase === 'vote' && p.id !== state.playerId) {
+          card.addEventListener('click', () => {
+            if (state.hasVoted) return;
+            state.hasVoted = true;
+
+            grid.querySelectorAll('.village-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+
+            socket.emit('castVote', { targetId: p.id });
+            $('#vote-chosen').textContent = 'Vote cast. Waiting for others...';
+            $('#vote-chosen').style.display = 'block';
+            $('#btn-skip-vote').style.display = 'none';
+
+            grid.querySelectorAll('.village-card').forEach(c => {
+              if (!c.classList.contains('selected')) c.classList.add('disabled');
+            });
+          });
+        }
+        
+        if (state.phase === 'night' && nightTargets && !state.hasActed) {
+          // Check if this player is a valid target
+          const isTarget = nightTargets.some(t => t.id === p.id);
+          if (isTarget) {
+            card.addEventListener('click', () => {
+              if (state.hasActed) return;
+              state.hasActed = true;
+
+              grid.querySelectorAll('.village-card').forEach(c => c.classList.remove('selected'));
+              card.classList.add('selected');
+
+              socket.emit('nightAction', { targetId: p.id });
+              $('#night-chosen').textContent = 'Your choice has been made. Waiting for others...';
+              $('#night-chosen').style.display = 'block';
+
+              grid.querySelectorAll('.village-card').forEach(c => {
+                if (!c.classList.contains('selected')) c.classList.add('disabled');
+              });
+            });
+          }
+        }
+      }
+
+      grid.appendChild(card);
+    });
+  }
 
   // ─── Utility ───────────────────────────────────────────────────────
 
