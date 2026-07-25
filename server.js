@@ -430,19 +430,29 @@ io.on('connection', (socket) => {
     const player = room.players.find(p => p.id === socket.id);
     if (player) player.readyToVote = true;
 
-    // Auto ready bots
-    room.players.filter(p => p.isBot && p.alive).forEach(b => b.readyToVote = true);
-
     const living = room.players.filter(p => p.alive);
     const readyCount = living.filter(p => p.readyToVote).length;
-
     io.to(code).emit('dayReadyProgress', { readyCount, totalCount: living.length });
 
     if (living.every(p => p.readyToVote)) {
       room.phase = 'vote';
       broadcastRoomState(room);
+    } else {
+      // Auto-ready bots AFTER human's state is committed (small delay so broadcast arrives first)
+      setTimeout(() => {
+        if (room.phase !== 'day') return;
+        room.players.filter(p => p.isBot && p.alive).forEach(b => b.readyToVote = true);
+        const livingNow = room.players.filter(p => p.alive);
+        const readyNow = livingNow.filter(p => p.readyToVote).length;
+        io.to(code).emit('dayReadyProgress', { readyCount: readyNow, totalCount: livingNow.length });
+        if (livingNow.every(p => p.readyToVote)) {
+          room.phase = 'vote';
+          broadcastRoomState(room);
+        }
+      }, 400);
     }
   });
+
 
   socket.on('forceVotePhase', () => {
     const code = socket.roomCode;

@@ -43,8 +43,13 @@ function showScreen(screenId) {
 function updateThemeForPhase(phase) {
   if (phase === 'night') {
     document.body.classList.add('night');
+    document.body.classList.remove('day');
+  } else if (phase === 'day' || phase === 'vote' || phase === 'voteResult') {
+    document.body.classList.add('day');
+    document.body.classList.remove('night');
   } else {
     document.body.classList.remove('night');
+    document.body.classList.remove('day');
   }
 }
 
