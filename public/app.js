@@ -102,7 +102,13 @@ function renderVillageGrid() {
       card.classList.add('disabled');
     }
 
-    const avatarText = (player.name || '?').charAt(0).toUpperCase();
+    // Determine avatar role to display
+    let displayRole = 'villager';
+    if (player.id === state.playerId) {
+      displayRole = state.role || 'villager';
+    } else if (state.role === 'mafia' && player.role === 'mafia') {
+      displayRole = 'mafia';
+    }
 
     // Live vote count badge
     let voteBadgeHtml = '';
@@ -113,9 +119,9 @@ function renderVillageGrid() {
 
     card.innerHTML = `
       ${voteBadgeHtml}
-      <div class="player-avatar">${avatarText}</div>
+      <div class="player-avatar">${getCharacterAvatarSvg(displayRole, player.alive)}</div>
       <span class="player-name">${escapeHtml(player.name)} ${player.id === state.playerId ? '(You)' : ''}</span>
-      <span class="player-status ${player.alive ? 'alive-tag' : 'dead-tag'}">${player.alive ? 'ALIVE' : 'DEAD'}</span>
+      <span class="player-status ${player.alive ? 'alive-tag' : 'dead-tag'}">${player.alive ? 'ALIVE' : 'ELIMINATED'}</span>
     `;
 
     grid.appendChild(card);
@@ -273,14 +279,19 @@ function setupVoteResultScreen(data) {
     }
   }
 
-  // Render Vote Tally Table
+  // Render Formatted Vote Tally Chips
   const tallyEl = $('#vote-tally');
   if (tallyEl && vr.voteDetail) {
-    let html = '<div class="tally-box"><h4>Vote Breakdown</h4><ul>';
+    let html = '<div class="tally-card"><h4>Vote Breakdown</h4><div class="tally-grid">';
     vr.voteDetail.forEach(v => {
-      html += `<li><strong>${escapeHtml(v.voterName)}</strong> voted for <span>${escapeHtml(v.targetName)}</span></li>`;
+      html += `
+        <div class="tally-chip">
+          <span class="tally-voter">${escapeHtml(v.voterName)}</span>
+          <span class="tally-arrow">➔</span>
+          <span class="tally-target ${v.targetName === 'Skipped' ? 'is-skipped' : ''}">${escapeHtml(v.targetName)}</span>
+        </div>`;
     });
-    html += '</ul></div>';
+    html += '</div></div>';
     tallyEl.innerHTML = html;
   }
 
@@ -310,21 +321,30 @@ function setupGameOverScreen(data) {
   const subEl = $('#gameover-subtitle');
 
   if (data.winner === 'village') {
-    if (titleEl) titleEl.textContent = 'VILLAGE VICTORY!';
+    if (titleEl) {
+      titleEl.textContent = 'VILLAGE VICTORY!';
+      titleEl.className = 'gameover-title winner-village';
+    }
     if (subEl) subEl.textContent = 'All Mafia members have been eliminated. The village is safe!';
   } else {
-    if (titleEl) titleEl.textContent = 'MAFIA VICTORY!';
+    if (titleEl) {
+      titleEl.textContent = 'MAFIA VICTORY!';
+      titleEl.className = 'gameover-title winner-mafia';
+    }
     if (subEl) subEl.textContent = 'The Mafia has taken over the village!';
   }
 
-  // Populate roles table
+  // Populate formatted roles table with mini character avatars
   const tbody = $('#gameover-table tbody');
   if (tbody && data.players) {
     tbody.innerHTML = '';
     data.players.forEach(p => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td><strong>${escapeHtml(p.name)}</strong></td>
+        <td class="player-cell">
+          <div class="mini-avatar-wrap">${getCharacterAvatarSvg(p.role, p.alive)}</div>
+          <strong>${escapeHtml(p.name)}</strong>
+        </td>
         <td><span class="role-badge role-${p.role}">${(p.role || '').toUpperCase()}</span></td>
         <td>${p.alive ? '<span class="status-alive">ALIVE</span>' : '<span class="status-dead">ELIMINATED</span>'}</td>
       `;
@@ -350,10 +370,48 @@ function escapeHtml(str) {
 
 // ── Welcome Screen Handlers ──
 function initWelcomeHandlers() {
-  $('#btn-create-room').addEventListener('click', () => {
-    const name = $('#input-player-name').value.trim();
+  const stepName = $('#welcome-step-name');
+  const stepAction = $('#welcome-step-action');
+  const nameInput = $('#input-player-name');
+  const errorEl = $('#welcome-error');
+
+  const goToStepAction = () => {
+    const name = nameInput.value.trim();
     if (!name) {
-      $('#welcome-error').textContent = 'Please enter your name.';
+      if (errorEl) errorEl.textContent = 'Please enter your name.';
+      return;
+    }
+    if (errorEl) errorEl.textContent = '';
+    if ($('#greeting-name')) $('#greeting-name').textContent = name;
+    if (stepName) stepName.style.display = 'none';
+    if (stepAction) stepAction.style.display = 'flex';
+  };
+
+  const goToStepName = () => {
+    if (errorEl) errorEl.textContent = '';
+    if (stepAction) stepAction.style.display = 'none';
+    if (stepName) stepName.style.display = 'flex';
+  };
+
+  if ($('#btn-name-next')) {
+    $('#btn-name-next').addEventListener('click', goToStepAction);
+  }
+
+  if (nameInput) {
+    nameInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') goToStepAction();
+    });
+  }
+
+  if ($('#btn-back-to-name')) {
+    $('#btn-back-to-name').addEventListener('click', goToStepName);
+  }
+
+  $('#btn-create-room').addEventListener('click', () => {
+    const name = nameInput.value.trim();
+    if (!name) {
+      goToStepName();
+      if (errorEl) errorEl.textContent = 'Please enter your name.';
       return;
     }
 
@@ -364,17 +422,23 @@ function initWelcomeHandlers() {
         state.roomCode = res.roomCode;
         enterLobby();
       } else {
-        $('#welcome-error').textContent = res.error;
+        if (errorEl) errorEl.textContent = res.error;
       }
     });
   });
 
   $('#btn-join-room').addEventListener('click', () => {
     const code = $('#input-room-code').value.trim();
-    const name = $('#input-player-name').value.trim();
+    const name = nameInput.value.trim();
 
-    if (!code || !name) {
-      $('#welcome-error').textContent = 'Please enter both a room code and your name.';
+    if (!name) {
+      goToStepName();
+      if (errorEl) errorEl.textContent = 'Please enter your name.';
+      return;
+    }
+
+    if (!code) {
+      if (errorEl) errorEl.textContent = 'Please enter a valid 4-letter room code.';
       return;
     }
 
@@ -385,7 +449,7 @@ function initWelcomeHandlers() {
         state.roomCode = res.roomCode;
         enterLobby();
       } else {
-        $('#welcome-error').textContent = res.error;
+        if (errorEl) errorEl.textContent = res.error;
       }
     });
   });
@@ -503,7 +567,14 @@ socket.on('roleAssigned', (data) => {
 socket.on('phaseChange', (data) => {
   state.players = data.players || state.players;
 
-  if (data.phase === 'roleReveal') {
+  if (data.phase === 'lobby') {
+    state.role = null;
+    state.selectedTarget = null;
+    state.voteCounts = {};
+    showScreen('lobby');
+    renderPlayerList();
+    renderSettings();
+  } else if (data.phase === 'roleReveal') {
     showScreen('role');
   } else if (data.phase === 'night') {
     showScreen('night');
@@ -529,6 +600,57 @@ socket.on('roleAckProgress', (data) => {
   }
 });
 
+function getCharacterAvatarSvg(role, alive = true) {
+  if (!alive) {
+    return `
+      <svg class="avatar-svg dead-ghost-svg" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 40C12 24 16 12 24 12C32 12 36 24 36 40H12Z" fill="currentColor" opacity="0.3"/>
+        <path d="M14 38C14 26 18 14 24 14C30 14 34 26 34 38H14Z" stroke="currentColor" stroke-width="2.5" fill="none"/>
+        <path d="M19 22L23 26M23 22L19 26" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <path d="M25 22L29 26M29 22L25 26" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <path d="M20 32C22 30 26 30 28 32" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>`;
+  }
+
+  if (role === 'mafia') {
+    return `
+      <svg class="avatar-svg mafia-avatar-svg" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="24" cy="28" r="14" fill="currentColor" opacity="0.15"/>
+        <path d="M10 26C10 26 16 24 24 24C32 24 38 26 38 26C41 26 42 27.5 42 29C42 30.5 39 32 33 32C27 32 18 32 15 32C9 32 6 30.5 6 29C6 27.5 7 26 10 26Z" fill="currentColor"/>
+        <path d="M15 24L17 12C17 12 19 9 24 9C29 9 31 12 31 12L33 24H15Z" fill="currentColor"/>
+        <rect x="15" y="21" width="18" height="3" fill="#FF0052"/>
+        <path d="M14 33H22V37H14V33Z" fill="currentColor"/>
+        <path d="M26 33H34V37H26V33Z" fill="currentColor"/>
+        <line x1="22" y1="35" x2="26" y2="35" stroke="currentColor" stroke-width="2"/>
+      </svg>`;
+  }
+
+  if (role === 'healer') {
+    return `
+      <svg class="avatar-svg healer-avatar-svg" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="24" cy="26" r="14" fill="currentColor" opacity="0.15"/>
+        <path d="M14 22C14 16 18 12 24 12C30 12 34 16 34 22H14Z" fill="#00C68D"/>
+        <rect x="22" y="15" width="4" height="10" fill="#FFFFFF"/>
+        <rect x="19" y="18" width="10" height="4" fill="#FFFFFF"/>
+        <circle cx="24" cy="28" r="12" stroke="currentColor" stroke-width="2.5"/>
+        <circle cx="19" cy="27" r="1.5" fill="currentColor"/>
+        <circle cx="29" cy="27" r="1.5" fill="currentColor"/>
+        <path d="M20 33C22 35 26 35 28 33" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>`;
+  }
+
+  return `
+    <svg class="avatar-svg villager-avatar-svg" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="24" cy="26" r="14" fill="currentColor" opacity="0.15"/>
+      <path d="M12 24C12 18 16 14 24 14C32 14 36 18 36 24H12Z" fill="#0055DA"/>
+      <path d="M8 24C8 24 14 22 24 22C34 22 40 24 40 24" stroke="#0055DA" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="24" cy="28" r="12" stroke="currentColor" stroke-width="2.5"/>
+      <circle cx="19" cy="27" r="1.5" fill="currentColor"/>
+      <circle cx="29" cy="27" r="1.5" fill="currentColor"/>
+      <path d="M19 33C22 36 26 36 29 33" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </svg>`;
+}
+
 function setupRoleCard() {
   const card = $('#role-card');
   if (!card) return;
@@ -549,6 +671,7 @@ function setupRoleCard() {
 
   if (roleIconEl) {
     roleIconEl.className = `role-icon role-${role}`;
+    roleIconEl.innerHTML = getCharacterAvatarSvg(role, true);
   }
 
   if (role === 'mafia') {

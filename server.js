@@ -178,6 +178,17 @@ function resolveNight(room) {
     }
   }
 
+  const winResult = checkWinCondition(room);
+  if (winResult) {
+    startGameOverPhase(room, winResult, {
+      nightResult: {
+        eliminatedPlayer: killedPlayer ? { id: killedPlayer.id, name: killedPlayer.name, role: killedPlayer.role } : null,
+        savedByHealer: savedByHealer && room.settings.revealHealerSave,
+      }
+    });
+    return;
+  }
+
   startDayPhase(room, {
     eliminatedPlayer: killedPlayer ? { id: killedPlayer.id, name: killedPlayer.name, role: killedPlayer.role } : null,
     savedByHealer: savedByHealer && room.settings.revealHealerSave,
@@ -199,6 +210,12 @@ function startDayPhase(room, nightResult = {}) {
 }
 
 function startVotePhase(room) {
+  const winResult = checkWinCondition(room);
+  if (winResult) {
+    startGameOverPhase(room, winResult);
+    return;
+  }
+
   room.phase = 'vote';
   room.votes = {};
 
@@ -610,6 +627,9 @@ io.on('connection', (socket) => {
     room.phase = 'lobby';
     room.round = 0;
     room.winner = null;
+    room.nightActions = {};
+    room.votes = {};
+    room.readyPlayers = new Set();
     room.players.forEach(p => {
       p.role = null;
       p.alive = true;

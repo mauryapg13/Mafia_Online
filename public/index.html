@@ -20,27 +20,41 @@
       <div class="welcome-wrapper">
         <div class="brand">
           <div class="brand-icon">
-            <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="30" cy="30" r="28" stroke="currentColor" stroke-width="3" />
-              <circle cx="30" cy="30" r="12" fill="currentColor" opacity="0.2" />
-              <path d="M30 2C30 2 38 18 38 30C38 42 30 58 30 58" stroke="currentColor" stroke-width="2" opacity="0.4" />
-              <path d="M30 2C30 2 22 18 22 30C22 42 30 58 30 58" stroke="currentColor" stroke-width="2" opacity="0.4" />
+            <!-- Minimalist Fedora & Glasses SVG Icon -->
+            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 36C12 36 20 34 32 34C44 34 52 36 52 36C56 36 58 38 58 40C58 42 54 44 46 44C38 44 26 44 18 44C10 44 6 42 6 40C6 38 8 36 12 36Z" fill="currentColor"/>
+              <path d="M20 34L23 16C23 16 26 12 32 12C38 12 41 16 41 16L44 34H20Z" fill="currentColor"/>
+              <rect x="20" y="30" width="24" height="4" fill="#FF0052"/>
+              <!-- Sunglasses -->
+              <path d="M18 48C18 48 24 48 27 48C28 48 29 49 29 51V52C29 55 26 57 23 57C20 57 17 55 17 52V50C17 49 17.5 48 18 48Z" fill="currentColor"/>
+              <path d="M46 48C46 48 40 48 37 48C36 48 35 49 35 51V52C35 55 38 57 41 57C44 57 47 55 47 52V50C47 49 46.5 48 46 48Z" fill="currentColor"/>
+              <line x1="28" y1="50" x2="36" y2="50" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
             </svg>
           </div>
-          <h1>Mafia</h1>
-          <p class="tagline">The village sleeps tonight</p>
+          <h1 class="brand-title">MAFIA</h1>
+          <p class="tagline">The Village Sleeps Tonight</p>
         </div>
 
         <div class="welcome-actions">
-          <div class="join-form">
-            <input type="text" id="input-player-name" class="input" placeholder="Your name" maxlength="20" autocomplete="off" />
-            <button id="btn-create-room" class="btn btn-primary">Create Room</button>
+          <!-- Step 1: Name Entry -->
+          <div id="welcome-step-name" class="step-container">
+            <label class="input-label" for="input-player-name">What's your name?</label>
+            <input type="text" id="input-player-name" class="input" placeholder="Enter your name" maxlength="20" autocomplete="off" />
+            <button id="btn-name-next" class="btn btn-primary btn-large margin-top">Continue ➔</button>
+          </div>
+
+          <!-- Step 2: Choose Action -->
+          <div id="welcome-step-action" class="step-container" style="display:none;">
+            <p class="welcome-greeting">Hello, <strong id="greeting-name">Player</strong>!</p>
+            <button id="btn-create-room" class="btn btn-primary btn-large">Create New Room</button>
             
             <div class="divider"><span>or join a game</span></div>
             
-            <input type="text" id="input-room-code" class="input" placeholder="Room code" maxlength="4" autocomplete="off" />
-            <button id="btn-join-room" class="btn btn-secondary">Join Room</button>
+            <input type="text" id="input-room-code" class="input text-center" placeholder="4-Letter Room Code" maxlength="4" autocomplete="off" />
+            <button id="btn-join-room" class="btn btn-secondary btn-large">Join Room</button>
+            <button id="btn-back-to-name" class="btn btn-ghost btn-small margin-top">← Change Name</button>
           </div>
+
           <p id="welcome-error" class="error-text"></p>
         </div>
       </div>
@@ -146,8 +160,30 @@
     <!-- ── Night Screen ── -->
     <div id="screen-night" class="screen">
       <div class="night-wrapper">
+        <!-- Mini Village Night Visual Header -->
+        <div class="mini-village-header">
+          <div class="night-sky-decor">
+            <svg class="moon-svg" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M26 18C26 23.5 21.5 28 16 28C10.5 28 6 23.5 6 18C6 13.5 9 9.5 13.5 8.3C12.5 10 12 12 12 14.5C12 20.5 16.5 25 22.5 25C24 25 25.5 24.5 26.5 23.8C25 26.3 22 28 18.5 28Z" fill="#FFD400"/>
+            </svg>
+            <span class="star-sparkle star-1">✦</span>
+            <span class="star-sparkle star-2">✧</span>
+            <span class="star-sparkle star-3">✦</span>
+          </div>
+          <div class="village-houses-silhouette">
+            <svg viewBox="0 0 200 40" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <!-- House Silhouettes -->
+              <path d="M10 40V24L22 14L34 24V40H10Z" fill="rgba(255,255,255,0.06)"/>
+              <path d="M45 40V20L60 10L75 20V40H45Z" fill="rgba(255,255,255,0.09)"/>
+              <path d="M90 40V26L105 16L120 26V40H90Z" fill="rgba(255,255,255,0.06)"/>
+              <path d="M135 40V22L150 12L165 22V40H135Z" fill="rgba(255,255,255,0.08)"/>
+              <path d="M172 40V28L184 18L196 28V40H172Z" fill="rgba(255,255,255,0.05)"/>
+            </svg>
+          </div>
+        </div>
+
         <div class="night-header">
-          <h2 id="night-title">Night falls</h2>
+          <h2 id="night-title">Night Falls on the Village</h2>
           <p id="night-round" class="round-label"></p>
         </div>
 
