@@ -535,7 +535,7 @@ input[type="text"]::placeholder { color: var(--text-dim); }
 }
 .allies-names-text { font-weight: 700; color: var(--text-light); }
 
-/* ── Night Phase ── */
+/* ── Night Phase layout ── */
 .night-container {
   width: 100%;
   max-width: 680px;
@@ -543,67 +543,106 @@ input[type="text"]::placeholder { color: var(--text-dim); }
   text-align: center;
 }
 
-.mini-village-banner {
+/* ── Village Scene Panorama SVG ── */
+.village-scene-wrap {
   width: 100%;
-  height: 110px;
-  background: linear-gradient(180deg, #060504 0%, #0E0C06 60%, #15130A 100%);
-  border: 1px solid #1E1C10;
+  margin-bottom: 1.5rem;
   border-radius: var(--radius-md);
-  position: relative;
   overflow: hidden;
-  margin-bottom: 1.25rem;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.5);
 }
 
-.village-sky {
-  position: absolute;
-  top: 12px;
-  left: 20px;
-  right: 20px;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-}
-
-.moon-svg {
-  width: 28px;
-  height: 28px;
-  color: #E8B83A;
-  filter: drop-shadow(0 0 10px rgba(232,184,58,0.5));
-  flex-shrink: 0;
-}
-
-.star-svg {
-  width: 10px;
-  height: 10px;
-  color: #C9962D;
-  opacity: 0.85;
-  margin-top: 4px;
-}
-.star-svg.star-sm {
-  width: 6px;
-  height: 6px;
-  opacity: 0.45;
-  margin-top: 10px;
-}
-
-.village-houses {
-  position: absolute;
-  bottom: 0;
+.village-scene-svg {
   width: 100%;
-  display: flex;
-  justify-content: space-around;
-  align-items: flex-end;
-  padding: 0 16px;
+  height: auto;
+  display: block;
 }
-.house {
-  background: #1A1810;
-  clip-path: polygon(50% 0%, 100% 40%, 100% 100%, 0% 100%, 0% 40%);
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
+
+/* Sky — dark ink at night, warm pre-dawn at day */
+.vg-sky {
+  fill: #060504;
+  transition: fill 0.9s ease;
 }
-.house.h1 { width: 44px; height: 56px; }
-.house.h2 { width: 62px; height: 74px; }
-.house.h3 { width: 50px; height: 62px; }
-.house.h4 { width: 40px; height: 48px; }
+body.day .vg-sky { fill: #1A1208; }
+
+/* Moon shadow must match sky so crescent is transparent cutout */
+.vg-moon-shadow {
+  fill: #060504;
+  transition: fill 0.9s ease;
+}
+body.day .vg-moon-shadow { fill: #1A1208; }
+
+/* Night-only elements (moon, stars, moon halo) */
+.vg-night-layer {
+  opacity: 1;
+  transition: opacity 0.9s ease;
+}
+body.day .vg-night-layer { opacity: 0; }
+
+/* Day-only elements (sun glow) */
+.vg-day-layer {
+  opacity: 0;
+  transition: opacity 0.9s ease;
+}
+body.day .vg-day-layer { opacity: 1; }
+
+/* Far hills */
+.vg-hills {
+  fill: #0C0A06;
+  transition: fill 0.9s ease;
+}
+body.day .vg-hills { fill: #141008; }
+
+/* Tree layers — layered depth via opacity */
+.vg-tree      { fill: #0D0C07; }
+.vg-tree-mid  { fill: #0F0D08; }
+.vg-tree-back { fill: #0B0A06; }
+.vg-tree-back-mid { fill: #0C0B07; }
+.vg-trunk     { fill: #0A0907; }
+
+/* House bodies */
+.vg-house-body     { fill: #151309; }
+.vg-house-body-alt { fill: #1A1810; } /* town hall slightly lighter */
+
+/* Roofs */
+.vg-roof     { fill: #100F07; }
+.vg-roof-alt { fill: #131208; }
+
+/* Chimneys */
+.vg-chimney     { fill: #100F07; }
+.vg-chimney-alt { fill: #131208; }
+
+/* Doors */
+.vg-door { fill: #0C0B07; }
+
+/* Windows — warm golden glow at night, dark/unlit at day */
+.vg-window {
+  fill: #C9962D;
+  opacity: 0.78;
+  transition: fill 0.9s ease, opacity 0.9s ease;
+}
+body.day .vg-window {
+  fill: #1A1810;
+  opacity: 0.35;
+}
+
+.vg-window-attic {
+  fill: #C9962D;
+  opacity: 0.55;
+  transition: fill 0.9s ease, opacity 0.9s ease;
+}
+body.day .vg-window-attic {
+  fill: #1A1810;
+  opacity: 0.25;
+}
+
+/* Ground strip */
+.vg-ground {
+  fill: #0D0B06;
+  transition: fill 0.9s ease;
+}
+body.day .vg-ground { fill: #110F08; }
+
 
 .night-header { margin-bottom: 1.25rem; }
 .round-label {

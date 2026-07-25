@@ -154,22 +154,6 @@
     <!-- ── Night Screen Header & Action Instruction Box ── -->
     <div id="screen-night" class="screen">
       <div class="night-container">
-        <!-- Mini Village Night Backdrop Banner -->
-        <div class="mini-village-banner">
-          <div class="village-sky">
-            <svg class="moon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-            <svg class="star-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" fill="currentColor"><polygon points="6,0.5 7.7,4.3 12,4.8 8.8,7.9 9.7,12 6,9.8 2.3,12 3.2,7.9 0,4.8 4.3,4.3"/></svg>
-            <svg class="star-svg star-sm" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" fill="currentColor"><polygon points="6,0.5 7.7,4.3 12,4.8 8.8,7.9 9.7,12 6,9.8 2.3,12 3.2,7.9 0,4.8 4.3,4.3"/></svg>
-            <svg class="star-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12" fill="currentColor"><polygon points="6,0.5 7.7,4.3 12,4.8 8.8,7.9 9.7,12 6,9.8 2.3,12 3.2,7.9 0,4.8 4.3,4.3"/></svg>
-          </div>
-          <div class="village-houses">
-            <div class="house h1"></div>
-            <div class="house h2"></div>
-            <div class="house h3"></div>
-            <div class="house h4"></div>
-          </div>
-        </div>
-
         <div class="night-header">
           <h2 id="night-title">Night Falls on the Village</h2>
           <p id="night-round" class="round-label">Round 1</p>
@@ -267,6 +251,145 @@
 
     <!-- ── Common In-Flow Village Card Grid ── -->
     <div id="village-grid-container" class="village-grid-container" style="display:none;">
+
+      <!-- Village Panorama — shared art for night, day, and vote phases -->
+      <div class="village-scene-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 160" class="village-scene-svg" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
+          <defs>
+            <!-- Sun horizon glow for day -->
+            <radialGradient id="vg-sun" cx="72%" cy="110%" r="55%">
+              <stop offset="0%" stop-color="#C9962D" stop-opacity="0.35"/>
+              <stop offset="100%" stop-color="#C9962D" stop-opacity="0"/>
+            </radialGradient>
+            <!-- Moon ambient glow for night -->
+            <radialGradient id="vg-moon-halo" cx="10%" cy="28%" r="22%">
+              <stop offset="0%" stop-color="#E8B83A" stop-opacity="0.14"/>
+              <stop offset="100%" stop-color="#E8B83A" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+
+          <!-- ── Sky ── -->
+          <rect class="vg-sky" width="1200" height="160"/>
+
+          <!-- Night: moon ambient, crescent, stars -->
+          <rect class="vg-night-layer" width="1200" height="160" fill="url(#vg-moon-halo)"/>
+
+          <!-- Crescent moon (two overlapping circles) -->
+          <g class="vg-night-layer">
+            <circle cx="108" cy="42" r="22" fill="#E8B83A" opacity="0.95"/>
+            <circle class="vg-moon-shadow" cx="120" cy="34" r="19"/>
+            <!-- Stars -->
+            <circle cx="260" cy="18" r="1.5" fill="#E8B83A" opacity="0.75"/>
+            <circle cx="390" cy="12" r="1"   fill="#E8B83A" opacity="0.55"/>
+            <circle cx="520" cy="25" r="2"   fill="#C9962D" opacity="0.6"/>
+            <circle cx="660" cy="9"  r="1"   fill="#E8B83A" opacity="0.65"/>
+            <circle cx="775" cy="22" r="1.5" fill="#E8B83A" opacity="0.5"/>
+            <circle cx="900" cy="14" r="1"   fill="#C9962D" opacity="0.7"/>
+            <circle cx="1020" cy="29" r="1.5" fill="#E8B83A" opacity="0.5"/>
+            <circle cx="1155" cy="17" r="1"  fill="#E8B83A" opacity="0.6"/>
+          </g>
+
+          <!-- Day: horizon sun glow -->
+          <rect class="vg-day-layer" width="1200" height="160" fill="url(#vg-sun)"/>
+
+          <!-- ── Far rolling hills ── -->
+          <path d="M0,118 C80,102 160,114 240,100 C320,86 400,108 480,96 C560,84 640,106 720,94 C800,84 880,104 960,92 C1040,80 1120,100 1200,90 L1200,160 L0,160 Z" class="vg-hills"/>
+
+          <!-- ═══════ LEFT TREES ═══════ -->
+          <!-- Pine A (tall) -->
+          <polygon points="28,155  46,106 64,155"  class="vg-tree"/>
+          <polygon points="25,136  46,94  67,136"  class="vg-tree-mid"/>
+          <polygon points="22,118  46,80  70,118"  class="vg-tree"/>
+          <rect x="43" y="153" width="6" height="7"  class="vg-trunk"/>
+          <!-- Pine B (behind, shorter) -->
+          <polygon points="80,155  94,116 108,155" class="vg-tree-back"/>
+          <polygon points="78,138  94,104 110,138" class="vg-tree-back-mid"/>
+          <rect x="91" y="153" width="5" height="7"  class="vg-trunk"/>
+
+          <!-- ═══════ HOUSE 1 — left medium ═══════ -->
+          <!-- Body -->
+          <rect x="148" y="104" width="88" height="56" class="vg-house-body"/>
+          <!-- Roof -->
+          <polygon points="138,104 192,56 246,104" class="vg-roof"/>
+          <!-- Chimney -->
+          <rect x="215" y="54" width="11" height="28" class="vg-chimney"/>
+          <!-- Windows -->
+          <rect x="158" y="116" width="20" height="26" rx="2" class="vg-window"/>
+          <rect x="198" y="116" width="20" height="26" rx="2" class="vg-window"/>
+          <!-- Arched door -->
+          <path d="M176,160 L176,140 Q192,128 208,140 L208,160 Z" class="vg-door"/>
+
+          <!-- centre-left dividing pines -->
+          <polygon points="280,155  295,114 310,155" class="vg-tree-back"/>
+          <polygon points="278,136  295,102 312,136" class="vg-tree-back-mid"/>
+          <rect x="292" y="153" width="5" height="7"  class="vg-trunk"/>
+
+          <!-- ═══════ HOUSE 2 — centre tall (town hall) ═══════ -->
+          <rect x="336" y="84" width="124" height="76" class="vg-house-body-alt"/>
+          <polygon points="323,84 398,28 473,84" class="vg-roof-alt"/>
+          <!-- Left chimney stack -->
+          <rect x="333" y="26" width="13" height="40" class="vg-chimney-alt"/>
+          <!-- Right chimney stack -->
+          <rect x="443" y="38" width="11" height="30" class="vg-chimney-alt"/>
+          <!-- Arched attic window -->
+          <path d="M387,52 A11,11 0 0,1 409,52 L409,66 L387,66 Z" class="vg-window-attic"/>
+          <!-- Ground-floor windows -->
+          <rect x="346" y="98"  width="26" height="32" rx="2" class="vg-window"/>
+          <rect x="422" y="98"  width="26" height="32" rx="2" class="vg-window"/>
+          <!-- Grand arched door -->
+          <path d="M374,160 L374,136 Q398,118 422,136 L422,160 Z" class="vg-door"/>
+
+          <!-- ═══════ HOUSE 3 — centre-right medium ═══════ -->
+          <rect x="520" y="108" width="84" height="52" class="vg-house-body"/>
+          <polygon points="510,108 562,63 614,108" class="vg-roof"/>
+          <rect x="581" y="62" width="10" height="24" class="vg-chimney"/>
+          <rect x="528" y="120" width="18" height="22" rx="2" class="vg-window"/>
+          <rect x="565" y="120" width="18" height="22" rx="2" class="vg-window"/>
+
+          <!-- right-of-centre pines -->
+          <polygon points="644,155  658,115 672,155" class="vg-tree-back"/>
+          <polygon points="642,136  658,103 674,136" class="vg-tree-back-mid"/>
+          <rect x="655" y="153" width="5" height="7"  class="vg-trunk"/>
+
+          <!-- ═══════ HOUSE 4 — right ═══════ -->
+          <rect x="716" y="100" width="96" height="60" class="vg-house-body"/>
+          <polygon points="704,100 764,48 826,100" class="vg-roof"/>
+          <rect x="793" y="47" width="10" height="30" class="vg-chimney"/>
+          <rect x="725" y="114" width="20" height="26" rx="2" class="vg-window"/>
+          <rect x="770" y="114" width="20" height="26" rx="2" class="vg-window"/>
+          <path d="M748,160 L748,140 Q764,128 780,140 L780,160 Z" class="vg-door"/>
+
+          <!-- ═══════ RIGHT TREES ═══════ -->
+          <!-- Pine C (tall) -->
+          <polygon points="870,155  888,110 906,155" class="vg-tree"/>
+          <polygon points="868,134  888,98  908,134" class="vg-tree-mid"/>
+          <polygon points="866,116  888,84  910,116" class="vg-tree"/>
+          <rect x="885" y="153" width="6" height="7"  class="vg-trunk"/>
+          <!-- Pine D (behind) -->
+          <polygon points="922,155  937,117 952,155" class="vg-tree-back"/>
+          <polygon points="920,136  937,105 954,136" class="vg-tree-back-mid"/>
+          <rect x="934" y="153" width="5" height="7"  class="vg-trunk"/>
+
+          <!-- ═══════ HOUSE 5 — far right small ═══════ -->
+          <rect x="998" y="112" width="74" height="48" class="vg-house-body"/>
+          <polygon points="988,112 1035,70 1082,112" class="vg-roof"/>
+          <rect x="1050" y="70" width="9" height="22" class="vg-chimney"/>
+          <rect x="1006" y="124" width="16" height="20" rx="2" class="vg-window"/>
+          <rect x="1042" y="124" width="16" height="20" rx="2" class="vg-window"/>
+
+          <!-- far-right pines -->
+          <polygon points="1110,155 1126,114 1142,155" class="vg-tree-back"/>
+          <polygon points="1108,135 1126,102 1144,135" class="vg-tree-back-mid"/>
+          <rect x="1123" y="153" width="5" height="7"  class="vg-trunk"/>
+          <polygon points="1158,155 1176,108 1194,155" class="vg-tree"/>
+          <polygon points="1156,134 1176,96  1196,134" class="vg-tree-mid"/>
+          <rect x="1173" y="153" width="5" height="7"  class="vg-trunk"/>
+
+          <!-- ── Ground strip ── -->
+          <rect x="0" y="154" width="1200" height="6" class="vg-ground"/>
+        </svg>
+      </div>
+
       <div class="grid-header">
         <h3>THE VILLAGE</h3>
         <span id="grid-status-hint" class="grid-status-hint"></span>
