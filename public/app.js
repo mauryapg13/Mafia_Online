@@ -191,12 +191,13 @@ function initDevModeHandlers() {
   const addBotsBtn = $('#btn-dev-add-bots');
   const godRolesBtn = $('#btn-dev-god-roles');
 
+  const PENCIL_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
   if (toggleBtn) {
     toggleBtn.addEventListener('click', () => {
       state.godMode = !state.godMode;
-      toggleBtn.textContent = state.godMode ? '✏️ Dev Mode: ON' : '✏️ Dev Mode: OFF';
-      if (addBotsBtn) addBotsBtn.style.display = state.godMode ? 'inline-block' : 'none';
-      if (godRolesBtn) godRolesBtn.style.display = state.godMode ? 'inline-block' : 'none';
+      toggleBtn.innerHTML = PENCIL_SVG + (state.godMode ? ' Dev Mode: ON' : ' Dev Mode: OFF');
+      if (addBotsBtn) addBotsBtn.style.display = state.godMode ? 'inline-flex' : 'none';
+      if (godRolesBtn) godRolesBtn.style.display = state.godMode ? 'inline-flex' : 'none';
     });
   }
 
@@ -246,7 +247,7 @@ function setupRoleCard() {
 
   if (role === 'mafia') {
     cardImg.src = '/assets/Mafia.png';
-    roleTeamEl.textContent = 'Team Mafia 🕵️';
+    roleTeamEl.textContent = 'Team Mafia';
     roleTeamEl.className = 'role-team-badge team-mafia';
     roleDescEl.textContent = 'Eliminate the villagers during the night without getting caught during daytime votes.';
     if (alliesBox) alliesBox.style.display = 'block';
@@ -257,13 +258,13 @@ function setupRoleCard() {
     }
   } else if (role === 'healer') {
     cardImg.src = '/assets/Healer.png';
-    roleTeamEl.textContent = 'Team Village 🩺';
+    roleTeamEl.textContent = 'Team Village';
     roleTeamEl.className = 'role-team-badge team-village';
     roleDescEl.textContent = 'Choose one player each night to protect from Mafia elimination.';
     if (alliesBox) alliesBox.style.display = 'none';
   } else {
     cardImg.src = '/assets/Villager.png';
-    roleTeamEl.textContent = 'Team Village 👨‍🌾';
+    roleTeamEl.textContent = 'Team Village';
     roleTeamEl.className = 'role-team-badge team-village';
     roleDescEl.textContent = 'Discuss during daytime to identify and vote out hidden Mafia members.';
     if (alliesBox) alliesBox.style.display = 'none';
@@ -307,18 +308,21 @@ function setupNightScreen() {
 
   const role = state.role || 'villager';
 
+  const SVG_TARGET = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" style="vertical-align:middle;margin-right:4px"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`;
+  const SVG_CROSS  = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" style="vertical-align:middle;margin-right:4px"><path d="M12 8v8M8 12h8"/><circle cx="12" cy="12" r="9"/></svg>`;
+  const SVG_MOON   = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="14" height="14" style="vertical-align:middle;margin-right:4px"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
   if (role === 'mafia') {
-    if (badge) badge.textContent = '🕵️ Mafia Objective';
+    if (badge) badge.innerHTML = SVG_TARGET + 'Mafia Objective';
     if (title) title.textContent = 'Select Night Target';
     if (desc) desc.textContent = 'Click any player card below to select your target for elimination. Fellow Mafia will see your choice in real time.';
   } else if (role === 'healer') {
-    if (badge) badge.textContent = '🩺 Healer Objective';
+    if (badge) badge.innerHTML = SVG_CROSS + 'Healer Objective';
     if (title) title.textContent = 'Protect a Player';
     if (desc) desc.textContent = 'Click any player card below to protect them from Mafia elimination tonight.';
   } else {
-    if (badge) badge.textContent = '🌙 Village Sleep';
-    if (title) title.textContent = 'Rest Until Morning';
-    if (desc) desc.textContent = 'The village is asleep. Rest quietly until dawn breaks.';
+    if (badge) badge.innerHTML = SVG_MOON + 'Village — Rest Until Morning';
+    if (title) title.textContent = 'The village sleeps';
+    if (desc) desc.textContent = 'Sit quietly while the night plays out. Dawn will reveal what happened.';
   }
 }
 
@@ -418,11 +422,11 @@ socket.on('nightResult', (data) => {
   const resultText = $('#day-result-text');
   if (resultText) {
     if (data.eliminatedPlayer) {
-      resultText.textContent = `💀 Tragedy strikes! ${data.eliminatedPlayer.name} was eliminated during the night.`;
+      resultText.textContent = `Tragedy strikes — ${data.eliminatedPlayer.name} was eliminated during the night.`;
     } else if (data.saved) {
-      resultText.textContent = `🩺 A miraculous night! The Healer successfully protected the target!`;
+      resultText.textContent = `A miraculous night. The Healer successfully protected their target.`;
     } else {
-      resultText.textContent = `🌅 A peaceful night. Everyone survived!`;
+      resultText.textContent = `A peaceful night. Everyone survived until morning.`;
     }
   }
 });
