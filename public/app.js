@@ -23,6 +23,8 @@ const state = {
   roleAcknowledged: false,
   readyForVote: false,
   readyForNight: false,
+  devMode: false,
+  godMode: false,
 };
 
 // DOM Helpers
@@ -108,6 +110,13 @@ function renderVillageGrid() {
       displayRole = state.role || 'villager';
     } else if (state.role === 'mafia' && player.role === 'mafia') {
       displayRole = 'mafia';
+    } else if (state.godMode && player.role) {
+      displayRole = player.role;
+    }
+
+    let godTagHtml = '';
+    if (state.godMode && player.role) {
+      godTagHtml = `<span class="god-role-tag role-${player.role}">👁️ ${player.role}</span>`;
     }
 
     // Live vote count badge
@@ -122,6 +131,7 @@ function renderVillageGrid() {
       ${getCharacterAvatarHtml(displayRole, player.alive)}
       <div class="card-info-bar">
         <span class="player-name">${escapeHtml(player.name)} ${player.id === state.playerId ? '(You)' : ''}</span>
+        ${godTagHtml}
         <span class="player-status ${player.alive ? 'alive-tag' : 'dead-tag'}">${player.alive ? 'ALIVE' : 'ELIMINATED'}</span>
       </div>
     `;
@@ -791,6 +801,41 @@ function initGameHandlers() {
   if (btnPlayAgain) {
     btnPlayAgain.addEventListener('click', () => {
       socket.emit('playAgain');
+    });
+  }
+
+  // 🧪 Dev Mode Button Handlers
+  const btnDevToggle = $('#btn-dev-toggle');
+  if (btnDevToggle) {
+    btnDevToggle.addEventListener('click', () => {
+      state.devMode = !state.devMode;
+      btnDevToggle.textContent = state.devMode ? '🧪 Dev Mode: ON' : '🧪 Dev Mode: OFF';
+      btnDevToggle.classList.toggle('active', state.devMode);
+      if ($('#dev-controls')) $('#dev-controls').style.display = state.devMode ? 'flex' : 'none';
+    });
+  }
+
+  const btnDevAddBots = $('#btn-dev-add-bots');
+  if (btnDevAddBots) {
+    btnDevAddBots.addEventListener('click', () => {
+      socket.emit('devAddBots');
+    });
+  }
+
+  const btnDevGodRoles = $('#btn-dev-god-roles');
+  if (btnDevGodRoles) {
+    btnDevGodRoles.addEventListener('click', () => {
+      socket.emit('devGetGodRoles', (res) => {
+        if (res && res.success) {
+          state.godMode = !state.godMode;
+          btnDevGodRoles.textContent = state.godMode ? '👁️ God Mode: ON' : '👁️ God Mode Roles';
+          res.players.forEach(p => {
+            const found = state.players.find(sp => sp.id === p.id);
+            if (found) found.role = p.role;
+          });
+          renderVillageGrid();
+        }
+      });
     });
   }
 }

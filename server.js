@@ -95,6 +95,57 @@ function safeCb(cb, result) {
   if (typeof cb === 'function') cb(result);
 }
 
+function autoRunBotActions(room) {
+  if (!room) return;
+  const bots = room.players.filter(p => p.isBot && p.alive);
+  if (bots.length === 0) return;
+
+  setTimeout(() => {
+    if (room.phase === 'roleReveal') {
+      bots.forEach(b => room.readyPlayers.add(b.id));
+      const ackCount = room.readyPlayers.size;
+      const totalCount = room.players.length;
+      io.to(room.code).emit('roleAckProgress', { acknowledgedCount: ackCount, totalCount });
+      if (ackCount >= totalCount) startNightPhase(room);
+    } else if (room.phase === 'night') {
+      bots.forEach(b => {
+        if (b.role === 'mafia' && !room.nightActions.mafia) {
+          const validTargets = getAlivePlayers(room).filter(p => p.role !== 'mafia');
+          if (validTargets.length > 0) room.nightActions.mafia = validTargets[0].id;
+        } else if (b.role === 'healer' && !room.nightActions.healer) {
+          const validTargets = getAlivePlayers(room);
+          if (validTargets.length > 0) room.nightActions.healer = validTargets[0].id;
+        }
+      });
+      checkNightComplete(room);
+    } else if (room.phase === 'day') {
+      bots.forEach(b => room.readyPlayers.add(b.id));
+      const alivePlayers = getAlivePlayers(room);
+      const readyCount = room.readyPlayers.size;
+      const totalCount = alivePlayers.length;
+      const waitingNames = alivePlayers.filter(p => !room.readyPlayers.has(p.id)).map(p => p.name);
+      io.to(room.code).emit('dayReadyProgress', { readyCount, totalCount, waitingForNames: waitingNames });
+      if (readyCount >= totalCount) startVotePhase(room);
+    } else if (room.phase === 'vote') {
+      bots.forEach(b => {
+        if (!room.votes[b.id]) {
+          const validTargets = getAlivePlayers(room).filter(p => p.id !== b.id);
+          room.votes[b.id] = validTargets.length > 0 ? validTargets[0].id : null;
+        }
+      });
+      checkVoteComplete(room);
+    } else if (room.phase === 'voteResult') {
+      bots.forEach(b => room.readyPlayers.add(b.id));
+      const alivePlayers = getAlivePlayers(room);
+      const readyCount = room.readyPlayers.size;
+      const totalCount = alivePlayers.length;
+      const waitingNames = alivePlayers.filter(p => !room.readyPlayers.has(p.id)).map(p => p.name);
+      io.to(room.code).emit('voteReadyProgress', { readyCount, totalCount, waitingForNames: waitingNames });
+      if (readyCount >= totalCount) startNightPhase(room);
+    }
+  }, 400);
+}
+
 function assignRoles(room) {
   const count = room.players.length;
   let { mafiaCount, healerCount } = room.settings;
@@ -208,6 +259,8 @@ function startDayPhase(room, nightResult = {}) {
     nightResult,
     discussionTime: room.settings.discussionTime,
   });
+
+  autoRunBotActions(room);
 }
 
 function startVotePhase(room) {
@@ -225,6 +278,8 @@ function startVotePhase(room) {
     round: room.round,
     players: publicPlayerList(room),
   });
+
+  autoRunBotActions(room);
 }
 
 function checkVoteComplete(room) {
@@ -489,6 +544,7 @@ io.on('connection', (socket) => {
       players: publicPlayerList(room),
     });
 
+    autoRunBotActions(room);
     safeCb(callback, { success: true });
   });
 
@@ -643,6 +699,40 @@ io.on('connection', (socket) => {
       players: publicPlayerList(room),
       settings: room.settings,
     });
+  });
+
+  // 🧪 Dev Mode: Add 3 Bot Players
+  socket.on('devAddBots', () => {
+    const room = findRoomBySocket(socket.id);
+    if (!room || room.hostId !== socket.id) return;
+
+    const botNames = ['Bot Bob 🤖', 'Bot Charlie 🤖', 'Bot David 🤖'];
+    botNames.forEach((bName, idx) => {
+      const botId = `bot_${Date.now()}_${idx}`;
+      if (!room.players.some(p => p.name === bName)) {
+        room.players.push({
+          id: botId,
+          socketId: botId,
+          name: bName,
+          role: null,
+          alive: true,
+          connected: true,
+          isBot: true,
+        });
+      }
+    });
+
+    io.to(room.code).emit('lobbyUpdate', {
+      players: publicPlayerList(room),
+      settings: room.settings,
+    });
+  });
+
+  // 🧪 Dev Mode: Request God Mode Roles
+  socket.on('devGetGodRoles', (cb) => {
+    const room = findRoomBySocket(socket.id);
+    if (!room) return safeCb(cb, { success: false });
+    safeCb(cb, { success: true, players: publicPlayerListWithRoles(room) });
   });
 
   // Disconnect
