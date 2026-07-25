@@ -3,225 +3,150 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Mafia party game for video calls. Create a room, invite friends, and play online.">
-  <title>Mafia — The Village Sleeps</title>
+  <title>Mafia — Deception & Strategy Game</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <!-- Developer Mode Top Bar -->
+  <div id="dev-mode-bar" class="dev-bar">
+    <button id="btn-dev-toggle" class="btn-dev">✏️ Dev Mode: OFF</button>
+    <button id="btn-dev-add-bots" class="btn-dev" style="display:none;">🤖 Add 3 Bots</button>
+    <button id="btn-dev-god-roles" class="btn-dev" style="display:none;">👁️ God Mode Roles</button>
+  </div>
 
-  <!-- ── App Container ── -->
   <div class="app-container">
 
-    <!-- ── 🧪 Developer Mode Top Toolbar ── -->
-    <div id="dev-mode-bar" class="dev-mode-bar">
-      <button id="btn-dev-toggle" class="btn btn-dev">🧪 Dev Mode: OFF</button>
-      <div id="dev-controls" class="dev-controls" style="display:none;">
-        <button id="btn-dev-add-bots" class="btn btn-dev-sub">🤖 Add 3 Bots</button>
-        <button id="btn-dev-god-roles" class="btn btn-dev-sub">👁️ God Mode Roles</button>
-      </div>
-    </div>
-
-    <!-- ── Welcome / Join Screen ── -->
+    <!-- ── Step 1: Welcome & Name Entry ── -->
     <div id="screen-welcome" class="screen active">
-      <div class="welcome-wrapper">
-        <div class="brand">
-          <div class="brand-icon">
-            <!-- Minimalist Fedora & Glasses SVG Icon -->
-            <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 36C12 36 20 34 32 34C44 34 52 36 52 36C56 36 58 38 58 40C58 42 54 44 46 44C38 44 26 44 18 44C10 44 6 42 6 40C6 38 8 36 12 36Z" fill="currentColor"/>
-              <path d="M20 34L23 16C23 16 26 12 32 12C38 12 41 16 41 16L44 34H20Z" fill="currentColor"/>
-              <rect x="20" y="30" width="24" height="4" fill="#FF0052"/>
-              <!-- Sunglasses -->
-              <path d="M18 48C18 48 24 48 27 48C28 48 29 49 29 51V52C29 55 26 57 23 57C20 57 17 55 17 52V50C17 49 17.5 48 18 48Z" fill="currentColor"/>
-              <path d="M46 48C46 48 40 48 37 48C36 48 35 49 35 51V52C35 55 38 57 41 57C44 57 47 55 47 52V50C47 49 46.5 48 46 48Z" fill="currentColor"/>
-              <line x1="28" y1="50" x2="36" y2="50" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-            </svg>
-          </div>
-          <h1 class="brand-title">MAFIA</h1>
-          <p class="tagline">The Village Sleeps Tonight</p>
+      <div class="welcome-card">
+        <div class="welcome-badge">ONLINE MULTIPLAYER</div>
+        <h1 class="app-title">MAFIA</h1>
+        <p class="app-tagline">Trust no one. Spot the lies. Survive the night.</p>
+
+        <div class="form-group">
+          <label for="input-player-name">Your Name</label>
+          <input type="text" id="input-player-name" placeholder="Enter your nickname" maxlength="15" autocomplete="off" autofocus />
         </div>
 
-        <div class="welcome-actions">
-          <!-- Step 1: Name Entry -->
-          <div id="welcome-step-name" class="step-container">
-            <label class="input-label" for="input-player-name">What's your name?</label>
-            <input type="text" id="input-player-name" class="input" placeholder="Enter your name" maxlength="20" autocomplete="off" />
-            <button id="btn-name-next" class="btn btn-primary btn-large margin-top">Continue ➔</button>
-          </div>
-
-          <!-- Step 2: Choose Action -->
-          <div id="welcome-step-action" class="step-container" style="display:none;">
-            <p class="welcome-greeting">Hello, <strong id="greeting-name">Player</strong>!</p>
-            <button id="btn-create-room" class="btn btn-primary btn-large">Create New Room</button>
-            
-            <div class="divider"><span>or join a game</span></div>
-            
-            <input type="text" id="input-room-code" class="input text-center" placeholder="4-Letter Room Code" maxlength="4" autocomplete="off" />
-            <button id="btn-join-room" class="btn btn-secondary btn-large">Join Room</button>
-            <button id="btn-back-to-name" class="btn btn-ghost btn-small margin-top">← Change Name</button>
-          </div>
-
-          <p id="welcome-error" class="error-text"></p>
-        </div>
+        <button id="btn-name-next" class="btn btn-primary btn-large btn-full">Continue ➔</button>
       </div>
     </div>
 
-    <!-- ── Lobby Screen ── -->
+    <!-- ── Step 2: Onboarding Choice (Create / Join) ── -->
+    <div id="screen-onboarding" class="screen">
+      <div class="onboarding-card">
+        <h2 id="welcome-greeting">Hello, Player!</h2>
+        <p class="subtle-text">Create a new game room or join your friends.</p>
+
+        <div class="action-buttons">
+          <button id="btn-create-room" class="btn btn-primary btn-large btn-full">🏰 Create New Room</button>
+          <button id="btn-show-join" class="btn btn-outline btn-large btn-full">🔑 Join Existing Room</button>
+        </div>
+
+        <!-- Join Form Hidden by Default -->
+        <div id="join-form" class="join-form-box" style="display:none;">
+          <div class="form-group">
+            <label for="input-room-code">Room Code</label>
+            <input type="text" id="input-room-code" placeholder="4-Letter Code (e.g. M8DW)" maxlength="4" autocomplete="off" style="text-transform:uppercase;" />
+          </div>
+          <button id="btn-join-room" class="btn btn-secondary btn-full">Join Room ➔</button>
+        </div>
+
+        <p id="onboarding-error" class="error-text"></p>
+      </div>
+    </div>
+
+    <!-- ── Step 3: Lobby Screen ── -->
     <div id="screen-lobby" class="screen">
-      <div class="lobby-wrapper">
+      <div class="lobby-card">
         <div class="lobby-header">
-          <h2>Game Lobby</h2>
-          <div class="room-code-display">
-            <span class="room-code-label">Room Code</span>
-            <span id="lobby-room-code" class="room-code-value"></span>
+          <span class="lobby-label">GAME LOBBY</span>
+          <div class="room-code-badge">
+            <span class="code-label">ROOM CODE</span>
+            <h2 id="lobby-room-code">----</h2>
           </div>
+          <p class="subtle-text">Share code with friends. Minimum 4 players required to start.</p>
         </div>
 
-        <div class="lobby-body">
-          <div class="lobby-players">
-            <h3>Players</h3>
-            <ul id="player-list" class="player-list"></ul>
-            <p id="player-count" class="subtle-text"></p>
-          </div>
-
-          <div id="settings-panel" class="settings-panel">
-            <h3>Game Settings</h3>
-            <div class="setting-group">
-              <label class="setting-label">Mafia members</label>
-              <div class="setting-control">
-                <button class="btn-step" data-setting="mafiaCount" data-dir="-1">-</button>
-                <span id="setting-mafia-count" class="setting-value">1</span>
-                <button class="btn-step" data-setting="mafiaCount" data-dir="1">+</button>
-              </div>
-            </div>
-            <div class="setting-group">
-              <label class="setting-label">Healers</label>
-              <div class="setting-control">
-                <button class="btn-step" data-setting="healerCount" data-dir="-1">-</button>
-                <span id="setting-healer-count" class="setting-value">1</span>
-                <button class="btn-step" data-setting="healerCount" data-dir="1">+</button>
-              </div>
-            </div>
-            <div class="setting-group">
-              <label class="setting-label">Discussion time</label>
-              <div class="setting-control">
-                <button class="btn-step" data-setting="discussionTime" data-dir="-30">-</button>
-                <span id="setting-discussion-time" class="setting-value">120s</span>
-                <button class="btn-step" data-setting="discussionTime" data-dir="30">+</button>
-              </div>
-            </div>
-            <div class="setting-group">
-              <label class="setting-label">First night kill</label>
-              <button id="setting-first-night-kill" class="btn-toggle active" data-setting="firstNightKill">Yes</button>
-            </div>
-            <div class="setting-group">
-              <label class="setting-label">Reveal role on death</label>
-              <button id="setting-reveal-role" class="btn-toggle active" data-setting="revealRoleOnDeath">Yes</button>
-            </div>
-            <div class="setting-group">
-              <label class="setting-label">Healer self-heal</label>
-              <button id="setting-self-heal" class="btn-toggle" data-setting="allowHealerSelfHeal">No</button>
-            </div>
-            <div class="setting-group">
-              <label class="setting-label">Reveal healer save</label>
-              <button id="setting-reveal-healer" class="btn-toggle active" data-setting="revealHealerSave">Yes</button>
-            </div>
-          </div>
+        <div class="players-section">
+          <h3>Connected Players (<span id="player-count">0</span>)</h3>
+          <div id="lobby-player-list" class="lobby-player-grid"></div>
         </div>
 
-        <div id="lobby-host-actions" class="lobby-footer" style="display:none;">
-          <button id="btn-start-game" class="btn btn-primary btn-large">Start Game</button>
-          <p id="lobby-error" class="error-text"></p>
+        <div class="lobby-actions">
+          <button id="btn-start-game" class="btn btn-primary btn-large btn-full" style="display:none;">🚀 Start Game</button>
+          <p id="lobby-wait-msg" class="waiting-text">Waiting for host to start the game...</p>
         </div>
 
-        <div id="lobby-player-wait" class="lobby-footer" style="display:none;">
-          <p class="waiting-text">Waiting for the host to start the game...</p>
-        </div>
+        <p id="lobby-error" class="error-text"></p>
       </div>
     </div>
 
     <!-- ── Role Reveal Screen ── -->
     <div id="screen-role" class="screen">
       <div class="role-reveal-container">
-        <!-- Left: Large Hero Playing Card -->
-        <div id="role-card-hero" class="role-card-hero">
-          <div class="role-card-inner">
-            <div class="role-card-front">
-              <div class="card-back-decor">
-                <span class="card-mystery-icon">🃏</span>
-                <p>Tap card to reveal role</p>
-              </div>
-            </div>
-            <div class="role-card-back">
-              <div id="role-hero-img-wrap" class="role-hero-img-wrap">
-                <!-- Large cropped playing card image inserted dynamically -->
-              </div>
-            </div>
+        <!-- Left: Character Hero Playing Card -->
+        <div class="role-hero-card-side">
+          <div class="role-card-display">
+            <img id="role-card-img" class="role-card-img-large" src="/assets/Villager.png" alt="Role Card" />
           </div>
         </div>
 
-        <!-- Right: Instructions Panel -->
+        <!-- Right: Instructions & Mission Panel -->
         <div id="role-instruction-panel" class="role-instruction-panel">
-          <h2 class="reveal-title">Your Secret Role</h2>
-          <div class="role-badge-box">
-            <h3 id="role-name" class="role-name"></h3>
-            <span id="role-team" class="role-team-pill"></span>
+          <span class="reveal-subtitle">SECRET ASSIGNMENT</span>
+          <div class="role-title-row">
+            <h2 id="role-name" class="role-name-display">Villager</h2>
+            <span id="role-team" class="role-team-badge">Team Village</span>
           </div>
 
-          <div class="instruction-box">
-            <h4>Role Instructions & Mission</h4>
-            <p id="role-description" class="role-description-text"></p>
-            <div id="role-mafia-allies-box" class="allies-box" style="display:none;">
+          <div class="instruction-card-body">
+            <h4>Role Mission & Instructions</h4>
+            <p id="role-description" class="role-desc-text">Discuss during daytime to identify and vote out hidden Mafia members before they eliminate the village.</p>
+            <div id="role-mafia-allies-box" class="allies-card-box" style="display:none;">
               <h5>Fellow Mafia Members</h5>
-              <p id="role-mafia-allies" class="role-allies-text"></p>
+              <p id="role-mafia-allies" class="allies-names-text"></p>
             </div>
           </div>
 
-          <button id="btn-role-ack" class="btn btn-primary btn-large">I Understand My Role ➔</button>
-          <p id="role-waiting" class="waiting-text" style="display:none;">Waiting for other players...</p>
+          <button id="btn-role-ack" class="btn btn-primary btn-large btn-full">I Understand My Role ➔</button>
+          <p id="role-waiting" class="waiting-text" style="display:none;">Waiting for other players to acknowledge...</p>
         </div>
       </div>
     </div>
 
-    <!-- ── Night Screen ── -->
+    <!-- ── Night Screen Header & Action Instruction Box ── -->
     <div id="screen-night" class="screen">
-      <div class="night-wrapper">
-        <!-- Mini Village Night Visual Header -->
-        <div class="mini-village-header">
-          <div class="night-sky-decor">
-            <svg class="moon-svg" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M26 18C26 23.5 21.5 28 16 28C10.5 28 6 23.5 6 18C6 13.5 9 9.5 13.5 8.3C12.5 10 12 12 12 14.5C12 20.5 16.5 25 22.5 25C24 25 25.5 24.5 26.5 23.8C25 26.3 22 28 18.5 28Z" fill="#FFD400"/>
-            </svg>
-            <span class="star-sparkle star-1">✦</span>
-            <span class="star-sparkle star-2">✧</span>
-            <span class="star-sparkle star-3">✦</span>
+      <div class="night-container">
+        <!-- Mini Village Night Backdrop Banner -->
+        <div class="mini-village-banner">
+          <div class="village-sky">
+            <span class="moon">🌙</span>
+            <span class="star s1">✨</span>
+            <span class="star s2">✨</span>
           </div>
-          <div class="village-houses-silhouette">
-            <svg viewBox="0 0 200 40" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M10 40V24L22 14L34 24V40H10Z" fill="rgba(255,255,255,0.06)"/>
-              <path d="M45 40V20L60 10L75 20V40H45Z" fill="rgba(255,255,255,0.09)"/>
-              <path d="M90 40V26L105 16L120 26V40H90Z" fill="rgba(255,255,255,0.06)"/>
-              <path d="M135 40V22L150 12L165 22V40H135Z" fill="rgba(255,255,255,0.08)"/>
-              <path d="M172 40V28L184 18L196 28V40H172Z" fill="rgba(255,255,255,0.05)"/>
-            </svg>
+          <div class="village-houses">
+            <div class="house h1"></div>
+            <div class="house h2"></div>
+            <div class="house h3"></div>
           </div>
         </div>
 
         <div class="night-header">
           <h2 id="night-title">Night Falls on the Village</h2>
-          <p id="night-round" class="round-label"></p>
+          <p id="night-round" class="round-label">Round 1</p>
         </div>
 
-        <!-- Separate Instruction & Action Box for Mafia / Healer / Villagers -->
+        <!-- Dedicated Night Action Instruction Card -->
         <div id="night-instruction-card" class="action-instruction-card">
           <div class="action-card-header">
-            <span id="night-role-badge" class="action-role-badge"></span>
-            <h3 id="night-action-title">Night Action</h3>
+            <span id="night-role-badge" class="action-role-badge">🕵️ Mafia Objective</span>
+            <h3 id="night-action-title">Select Night Target</h3>
           </div>
-          <p id="night-action-desc" class="action-desc-text"></p>
+          <p id="night-action-desc" class="action-desc-text">Click any player card below to select your target for elimination. Fellow Mafia members will see your choice in real time.</p>
           <div id="night-chosen" class="chosen-status-pill" style="display:none;"></div>
         </div>
       </div>
@@ -231,90 +156,75 @@
     <div id="screen-day" class="screen">
       <div class="day-wrapper">
         <div class="day-header">
-          <h2>Dawn breaks</h2>
-          <p id="day-round" class="round-label"></p>
+          <h2>Dawn Breaks on the Village</h2>
+          <p id="day-round" class="round-label">Round 1</p>
         </div>
 
-        <div id="day-result" class="day-result">
-          <p id="day-result-text" class="result-text"></p>
+        <div id="day-result" class="day-result-card">
+          <p id="day-result-text" class="result-text">Night news will appear here...</p>
         </div>
 
-        <div id="day-discussion" class="day-discussion">
-          <h3>Discussion</h3>
-          <p class="subtle-text">Talk it out on your video call. Who seems suspicious?</p>
-          <div class="timer-container">
-            <svg class="timer-ring" viewBox="0 0 120 120">
-              <circle class="timer-track" cx="60" cy="60" r="54" />
-              <circle id="timer-progress" class="timer-fill" cx="60" cy="60" r="54" />
-            </svg>
-            <span id="timer-text" class="timer-text"></span>
-          </div>
-          <div class="readiness-container">
-            <button id="btn-ready-vote" class="btn btn-secondary">Ready to vote</button>
-            <div id="day-readiness-bar" class="readiness-bar" style="display:none;">
+        <div class="discussion-box">
+          <h3>Daytime Discussion</h3>
+          <p class="subtle-text">Debate on video or audio call. Identify who seems suspicious!</p>
+
+          <div id="day-readiness-bar" class="readiness-bar-wrap" style="display:none;">
+            <div class="readiness-track">
               <div id="day-readiness-fill" class="readiness-fill"></div>
             </div>
-            <p id="day-readiness-text" class="readiness-text" style="display:none;"></p>
-            <button id="btn-force-vote" class="btn btn-ghost btn-small" style="display:none;">Force Proceed</button>
+            <p id="day-readiness-text" class="readiness-text">Waiting for players to get ready...</p>
           </div>
+
+          <button id="btn-ready-vote" class="btn btn-primary btn-large btn-full">Ready to Vote 🗳️</button>
         </div>
       </div>
     </div>
 
-    <!-- ── Vote Screen ── -->
+    <!-- ── Vote Screen Header ── -->
     <div id="screen-vote" class="screen">
       <div class="vote-wrapper">
-        <h2>Village Vote</h2>
-        <p class="subtle-text">Choose who to eliminate from the village grid, or skip your vote.</p>
-        <button id="btn-skip-vote" class="btn btn-ghost">Skip vote</button>
-        <div id="vote-status" class="vote-status">
-          <p id="vote-progress-text" class="subtle-text"></p>
-        </div>
-        <p id="vote-chosen" class="chosen-text" style="display:none;"></p>
+        <h2>Village Trial & Vote</h2>
+        <p class="subtle-text">Cast your secret vote to eliminate a suspect from the village.</p>
       </div>
     </div>
 
     <!-- ── Vote Result Screen ── -->
     <div id="screen-vote-result" class="screen">
-      <div class="vote-result-wrapper">
-        <h2>The Village Has Spoken</h2>
-        <p id="vote-result-text" class="result-text"></p>
-        <div id="vote-tally" class="vote-tally"></div>
-        
-        <div class="readiness-container">
-          <button id="btn-ready-night" class="btn btn-primary">Ready for night</button>
-          <div id="vote-readiness-bar" class="readiness-bar" style="display:none;">
-            <div id="vote-readiness-fill" class="readiness-fill"></div>
-          </div>
-          <p id="vote-readiness-text" class="readiness-text" style="display:none;"></p>
-          <button id="btn-force-night" class="btn btn-ghost btn-small" style="display:none;">Force Proceed</button>
+      <div class="vote-result-card">
+        <h2>Vote Results & Trial Outcome</h2>
+        <p id="vote-result-outcome" class="outcome-headline"></p>
+
+        <div class="breakdown-section">
+          <h3>Voting Breakdown</h3>
+          <div id="vote-breakdown-list" class="breakdown-list"></div>
         </div>
+
+        <button id="btn-next-phase" class="btn btn-primary btn-large btn-full" style="display:none;">Proceed to Night ➔</button>
+        <p id="vote-result-wait" class="waiting-text" style="display:none;">Waiting for host to continue...</p>
       </div>
     </div>
 
-    <!-- ── Game Over Screen ── -->
+    <!-- ── Game Over Victory Screen ── -->
     <div id="screen-gameover" class="screen">
-      <div class="gameover-wrapper">
-        <h2 id="gameover-title" class="gameover-title"></h2>
-        <p id="gameover-subtitle" class="gameover-subtitle"></p>
-        <div class="gameover-roles">
-          <h3>All Roles Revealed</h3>
-          <table id="gameover-table" class="roles-table">
-            <thead>
-              <tr><th>Player</th><th>Role</th><th>Fate</th></tr>
-            </thead>
-            <tbody></tbody>
-          </table>
+      <div class="gameover-card">
+        <div id="gameover-banner" class="victory-banner">VICTORY</div>
+        <h1 id="gameover-title" class="victory-title">MAFIA WINS</h1>
+        <p id="gameover-reason" class="victory-reason"></p>
+
+        <div class="roles-summary-section">
+          <h3>Final Role Reveal</h3>
+          <div id="gameover-roles-list" class="roles-summary-grid"></div>
         </div>
-        <button id="btn-play-again" class="btn btn-primary" style="display:none;">Play Again</button>
-        <p id="gameover-wait" class="waiting-text" style="display:none;">Waiting for host...</p>
+
+        <button id="btn-play-again" class="btn btn-primary btn-large btn-full" style="display:none;">🔄 Play Again</button>
+        <p id="gameover-wait" class="waiting-text" style="display:none;">Waiting for host to start a new match...</p>
       </div>
     </div>
 
-    <!-- ── In-Flow Village Grid Section ── -->
+    <!-- ── Common In-Flow Village Card Grid ── -->
     <div id="village-grid-container" class="village-grid-container" style="display:none;">
       <div class="grid-header">
-        <h3>The Village</h3>
+        <h3>THE VILLAGE</h3>
         <span id="grid-status-hint" class="grid-status-hint"></span>
       </div>
       <div id="village-grid" class="village-grid"></div>
