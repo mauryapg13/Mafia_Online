@@ -600,78 +600,23 @@ socket.on('roleAckProgress', (data) => {
   }
 });
 
-function getCharacterAvatarSvg(role, alive = true, name = '') {
+function getCharacterAvatarHtml(role, alive = true) {
   if (!alive) {
-    // Rich Ghost / Tombstone Avatar
-    return `
-      <svg class="avatar-svg dead-ghost-svg" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="32" cy="32" r="30" fill="#141522" stroke="#473472" stroke-width="2"/>
-        <ellipse cx="32" cy="12" rx="10" ry="3" stroke="#FFD400" stroke-width="2.5" fill="none"/>
-        <path d="M20 48C18 36 18 22 32 22C46 22 46 36 44 48C42 50 40 46 37 49C34 52 32 46 29 49C26 52 24 46 20 48Z" fill="#D6F4ED" opacity="0.85"/>
-        <path d="M24 29L28 33M28 29L24 33" stroke="#473472" stroke-width="2.5" stroke-linecap="round"/>
-        <path d="M36 29L40 33M40 29L36 33" stroke="#473472" stroke-width="2.5" stroke-linecap="round"/>
-        <ellipse cx="32" cy="38" rx="3" ry="4" fill="#473472"/>
-      </svg>`;
+    return `<img class="avatar-img dead-avatar-img" src="/assets/Dead%20Villager.png" alt="Eliminated" />`;
   }
 
   if (role === 'mafia') {
-    // Rich Mafia Detective Avatar
-    return `
-      <svg class="avatar-svg mafia-avatar-svg" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="32" cy="32" r="30" fill="#20132B" stroke="#473472" stroke-width="2"/>
-        <path d="M16 54L26 42H38L48 54V60H16V54Z" fill="#111320"/>
-        <path d="M28 42L32 50L36 42H28Z" fill="#FF0052"/>
-        <ellipse cx="32" cy="36" rx="14" ry="16" fill="#F4D3C2"/>
-        <path d="M18 28C18 28 25 31 32 31C39 31 46 28 46 28V33C46 33 39 36 32 36C25 36 18 33 18 33V28Z" fill="rgba(0,0,0,0.15)"/>
-        <path d="M19 32H29V37C29 39.2 27.2 41 25 41H23C20.8 41 19 39.2 19 37V32Z" fill="#111320"/>
-        <path d="M35 32H45V37C45 39.2 43.2 41 41 41H39C36.8 41 35 39.2 35 37V32Z" fill="#111320"/>
-        <line x1="29" y1="34" x2="35" y2="34" stroke="#111320" stroke-width="3"/>
-        <path d="M21 34L26 34" stroke="#FFF" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
-        <path d="M37 34L42 34" stroke="#FFF" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
-        <path d="M28 46C30 47.5 34 47.5 36 46" stroke="#473472" stroke-width="2" stroke-linecap="round"/>
-        <path d="M8 27C8 27 18 24 32 24C46 24 56 27 56 27C58 27 59 29 57 30.5C54.5 32 46 33 32 33C18 33 9.5 32 7 30.5C5 29 6 27 8 27Z" fill="#161824"/>
-        <path d="M20 25L23 9C23 9 26 6 32 6C38 6 41 9 41 9L44 25H20Z" fill="#161824"/>
-        <path d="M20 22H44V25H20V22Z" fill="#FF0052"/>
-      </svg>`;
+    return `<img class="avatar-img mafia-avatar-img" src="/assets/Mafia.png" alt="Mafia" />`;
   }
 
   if (role === 'healer') {
-    // Rich Medical Healer Avatar
-    return `
-      <svg class="avatar-svg healer-avatar-svg" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="32" cy="32" r="30" fill="#112C28" stroke="#00C68D" stroke-width="2"/>
-        <path d="M14 54L24 40H40L50 54V60H14V54Z" fill="#00C68D"/>
-        <path d="M27 40L32 46L37 40" stroke="#D6F4ED" stroke-width="3"/>
-        <path d="M20 42C20 48 44 48 44 42" stroke="#87BAC3" stroke-width="3" stroke-linecap="round"/>
-        <ellipse cx="32" cy="34" rx="14" ry="15" fill="#F4D3C2"/>
-        <path d="M18 26C18 18 24 14 32 14C40 14 46 18 46 26V28H18V26Z" fill="#FFFFFF"/>
-        <rect x="28" y="17" width="8" height="8" rx="2" fill="#00C68D"/>
-        <path d="M32 19V23M30 21H34" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
-        <circle cx="26" cy="33" r="2" fill="#112C28"/>
-        <circle cx="38" cy="33" r="2" fill="#112C28"/>
-        <path d="M27 39C29 41.5 35 41.5 37 39" stroke="#112C28" stroke-width="2" stroke-linecap="round"/>
-        <circle cx="23" cy="36" r="2" fill="#FF8B9A" opacity="0.5"/>
-        <circle cx="41" cy="36" r="2" fill="#FF8B9A" opacity="0.5"/>
-      </svg>`;
+    return `<img class="avatar-img healer-avatar-img" src="/assets/Healer.png" alt="Healer" />`;
   }
 
-  // Rich Villager Avatar
-  return `
-    <svg class="avatar-svg villager-avatar-svg" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="32" cy="32" r="30" fill="#1A243D" stroke="#53629E" stroke-width="2"/>
-      <path d="M14 54L24 40H40L50 54V60H14V54Z" fill="#53629E"/>
-      <path d="M28 40L32 45L36 40" fill="#87BAC3"/>
-      <ellipse cx="32" cy="34" rx="14" ry="15" fill="#FCE0D4"/>
-      <path d="M16 28C16 18 23 11 32 11C41 11 48 18 48 28H16Z" fill="#87BAC3"/>
-      <rect x="14" y="25" width="36" height="5" rx="2.5" fill="#53629E"/>
-      <circle cx="32" cy="9" r="4" fill="#53629E"/>
-      <circle cx="26" cy="33" r="2.5" fill="#1A243D"/>
-      <circle cx="38" cy="33" r="2.5" fill="#1A243D"/>
-      <path d="M26 39C29 42 35 42 38 39" stroke="#1A243D" stroke-width="2.5" stroke-linecap="round"/>
-      <path d="M23 29C25 28 28 29 28 29" stroke="#1A243D" stroke-width="1.5" stroke-linecap="round"/>
-      <path d="M36 29C36 29 39 28 41 29" stroke="#1A243D" stroke-width="1.5" stroke-linecap="round"/>
-    </svg>`;
+  return `<img class="avatar-img villager-avatar-img" src="/assets/Villager.png" alt="Villager" />`;
 }
+
+const getCharacterAvatarSvg = getCharacterAvatarHtml;
 
 function setupRoleCard() {
   const card = $('#role-card');
