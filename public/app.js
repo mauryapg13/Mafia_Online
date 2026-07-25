@@ -119,9 +119,11 @@ function renderVillageGrid() {
 
     card.innerHTML = `
       ${voteBadgeHtml}
-      <div class="player-avatar">${getCharacterAvatarSvg(displayRole, player.alive)}</div>
-      <span class="player-name">${escapeHtml(player.name)} ${player.id === state.playerId ? '(You)' : ''}</span>
-      <span class="player-status ${player.alive ? 'alive-tag' : 'dead-tag'}">${player.alive ? 'ALIVE' : 'ELIMINATED'}</span>
+      ${getCharacterAvatarHtml(displayRole, player.alive)}
+      <div class="card-info-bar">
+        <span class="player-name">${escapeHtml(player.name)} ${player.id === state.playerId ? '(You)' : ''}</span>
+        <span class="player-status ${player.alive ? 'alive-tag' : 'dead-tag'}">${player.alive ? 'ALIVE' : 'ELIMINATED'}</span>
+      </div>
     `;
 
     grid.appendChild(card);
@@ -602,18 +604,18 @@ socket.on('roleAckProgress', (data) => {
 
 function getCharacterAvatarHtml(role, alive = true) {
   if (!alive) {
-    return `<img class="avatar-img dead-avatar-img" src="/assets/Dead%20Villager.png" alt="Eliminated" />`;
+    return `<div class="card-character-hero dead-hero"><img class="card-hero-img dead-hero-img" src="/assets/Dead%20Villager.png" alt="Eliminated" /></div>`;
   }
 
   if (role === 'mafia') {
-    return `<img class="avatar-img mafia-avatar-img" src="/assets/Mafia.png" alt="Mafia" />`;
+    return `<div class="card-character-hero mafia-hero"><img class="card-hero-img mafia-hero-img" src="/assets/Mafia.png" alt="Mafia" /></div>`;
   }
 
   if (role === 'healer') {
-    return `<img class="avatar-img healer-avatar-img" src="/assets/Healer.png" alt="Healer" />`;
+    return `<div class="card-character-hero healer-hero"><img class="card-hero-img healer-hero-img" src="/assets/Healer.png" alt="Healer" /></div>`;
   }
 
-  return `<img class="avatar-img villager-avatar-img" src="/assets/Villager.png" alt="Villager" />`;
+  return `<div class="card-character-hero villager-hero"><img class="card-hero-img villager-hero-img" src="/assets/Villager.png" alt="Villager" /></div>`;
 }
 
 const getCharacterAvatarSvg = getCharacterAvatarHtml;
