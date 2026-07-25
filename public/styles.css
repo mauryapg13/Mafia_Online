@@ -579,12 +579,14 @@ body.day .vg-moon-shadow { fill: #1A1208; }
 }
 body.day .vg-night-layer { opacity: 0; }
 
-/* Day-only elements (sun glow) */
-.vg-day-layer {
+/* Day-only elements (sun glow & sky) */
+.vg-day-layer,
+.vg-day-sky-layer {
   opacity: 0;
   transition: opacity 0.9s ease;
 }
-body.day .vg-day-layer { opacity: 1; }
+body.day .vg-day-layer,
+body.day .vg-day-sky-layer { opacity: 1; }
 
 /* Far hills */
 .vg-hills {
@@ -650,6 +652,20 @@ body.day .vg-ground { fill: #110F08; }
   font-weight: 800;
   color: var(--gold);
   letter-spacing: 0.08em;
+}
+
+.night-countdown-text {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--gold-light);
+  margin-top: 0.5rem;
+  letter-spacing: 0.05em;
+  animation: pulseCountdown 1s infinite alternate;
+}
+
+@keyframes pulseCountdown {
+  0% { opacity: 0.75; transform: scale(0.98); }
+  100% { opacity: 1; transform: scale(1.02); }
 }
 
 .action-instruction-card {
@@ -825,6 +841,101 @@ body.day .vg-ground { fill: #110F08; }
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow-sm);
   letter-spacing: 0.02em;
+}
+
+/* Voter chips on player card (shows who voted for them) */
+.voter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 3px;
+  margin-top: 4px;
+}
+
+.voter-chip {
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(185, 28, 47, 0.25);
+  color: #F0A0A0;
+  border: 1px solid rgba(185, 28, 47, 0.5);
+  letter-spacing: 0.02em;
+}
+
+/* Card eliminated treatment */
+.village-card.card-just-eliminated {
+  opacity: 0.75;
+}
+
+.eliminated-stamp {
+  position: absolute;
+  top: 35%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-12deg);
+  z-index: 15;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.6rem;
+  letter-spacing: 0.12em;
+  color: var(--crimson-bright);
+  background: rgba(15, 14, 12, 0.88);
+  border: 2px solid var(--crimson);
+  padding: 2px 14px;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+  pointer-events: none;
+}
+
+/* ── Host Controls Panel ── */
+.host-controls-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 1.2rem 0;
+  padding: 0.85rem 1.2rem;
+  background: rgba(201, 150, 45, 0.08);
+  border: 1px solid rgba(201, 150, 45, 0.3);
+  border-radius: var(--radius-md);
+}
+
+.host-controls-label {
+  font-size: 0.7rem;
+  font-weight: 900;
+  color: var(--gold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.host-controls-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: center;
+}
+
+.btn-host-ctrl {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.45rem 0.9rem;
+  background: var(--surface);
+  border: 1px solid var(--card-border);
+  color: var(--parchment-dim);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--speed);
+}
+.btn-host-ctrl:hover:not(:disabled) {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: rgba(201, 150, 45, 0.12);
+}
+.btn-host-ctrl:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* ── Vote Breakdown ── */

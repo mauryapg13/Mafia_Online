@@ -14,7 +14,10 @@ const state = {
   godMode: false,
   selectedTargetId: null,
   votedTargetId: null,
-  voteCounts: {}
+  voteCounts: {},
+  voteChips: {},        // targetId -> [voterName, ...]
+  pendingDayPhase: false,
+  lastProtectedName: null
 };
 
 // ── Helper Utilities ──
@@ -73,6 +76,18 @@ socket.on('connect', () => {
 });
 
 socket.on('roomStateUpdate', (roomData) => {
+  // If we're in a night→day suspense countdown, don't switch screens mid-countdown
+  if (state.pendingDayPhase && roomData.phase === 'day') {
+    // Only update player list and state, not screen
+    state.players = roomData.players;
+    state.round = roomData.round;
+    const me = roomData.players.find(p => p.id === state.playerId);
+    if (me) { state.isHost = me.isHost; if (me.role) state.role = me.role; }
+    updateLobbyUI();
+    renderVillageGrid();
+    return;
+  }
+
   state.roomCode = roomData.code;
   state.players = roomData.players;
   state.round = roomData.round;
@@ -95,10 +110,12 @@ function syncPhase(phase) {
     setupRoleCard();
     showScreen('role');
   } else if (phase === 'night') {
+    state.voteChips = {};
     setupNightScreen();
     showScreen('night');
   } else if (phase === 'day') {
     showScreen('day');
+    setupDayReadiness();
   } else if (phase === 'vote') {
     showScreen('vote');
   } else if (phase === 'voteResult') {
@@ -307,9 +324,16 @@ function setupNightScreen() {
   const desc = $('#night-action-desc');
   const chosenPill = $('#night-chosen');
   const roundEl = $('#night-round');
+  const nightTitle = $('#night-title');
+  const countdownEl = $('#night-countdown');
 
   if (roundEl) roundEl.textContent = `Round ${state.round}`;
-  if (chosenPill) chosenPill.style.display = 'none';
+  if (chosenPill) { chosenPill.style.display = 'none'; chosenPill.style.cssText = ''; }
+  if (nightTitle) nightTitle.textContent = 'Night Falls on the Village';
+  if (countdownEl) countdownEl.style.display = 'none';
+
+  // Reset card opacities
+  $$('.village-card').forEach(c => { c.style.opacity = '1'; });
 
   const role = state.role || 'villager';
 
@@ -336,7 +360,7 @@ socket.on('mafiaTargetUpdate', (data) => {
     const chosenPill = $('#night-chosen');
     if (chosenPill) {
       chosenPill.style.display = 'block';
-      chosenPill.textContent = `Mafia target selected: ${data.targetName} (by ${data.chosenBy})`;
+      chosenPill.textContent = `Mafia consensus: ${data.targetName} (chosen by ${data.chosenBy})`;
     }
   }
 });
@@ -352,6 +376,7 @@ function renderVillageGrid() {
   state.players.forEach(player => {
     const card = document.createElement('div');
     card.className = `village-card ${player.id === state.playerId ? 'is-me' : ''}`;
+    card.dataset.id = player.id;
 
     let canClick = false;
     if (state.phase === 'night' && me && me.alive) {
@@ -365,6 +390,10 @@ function renderVillageGrid() {
       card.classList.add('clickable');
       card.addEventListener('click', () => handleCardClick(player));
     }
+
+    // Eliminated treatment in voteResult phase
+    const isEliminated = state.phase === 'voteResult' && !player.alive;
+    if (isEliminated) card.classList.add('card-just-eliminated');
 
     // Role avatar resolution
     let displayRole = 'villager';
@@ -385,21 +414,35 @@ function renderVillageGrid() {
       imgSrc = '/assets/Healer.png';
     }
 
-    // Vote count badge
+    // Vote count badge (during voting phase)
     let voteBadgeHtml = '';
     if (state.phase === 'vote' && state.voteCounts && state.voteCounts[player.id]) {
       const cnt = state.voteCounts[player.id];
       voteBadgeHtml = `<span class="vote-count-badge">${cnt} ${cnt === 1 ? 'vote' : 'votes'}</span>`;
     }
 
+    // Voter chips (shown on vote result)
+    let voterChipsHtml = '';
+    if ((state.phase === 'voteResult') && state.voteChips[player.id] && state.voteChips[player.id].length > 0) {
+      const chips = state.voteChips[player.id].map(v => `<span class="voter-chip">${escapeHtml(v)}</span>`).join('');
+      voterChipsHtml = `<div class="voter-chips">${chips}</div>`;
+    }
+
+    // Eliminated overlay
+    const eliminatedOverlay = isEliminated
+      ? `<div class="eliminated-stamp">EXPELLED</div>`
+      : '';
+
     card.innerHTML = `
       ${voteBadgeHtml}
+      ${eliminatedOverlay}
       <div class="card-character-hero">
         <img class="card-hero-img" src="${imgSrc}" alt="${player.name}" />
       </div>
       <div class="card-info-bar">
         <span class="player-name">${escapeHtml(player.name)} ${player.id === state.playerId ? '(You)' : ''}</span>
-        <span class="player-status ${player.alive ? 'alive-tag' : 'dead-tag'}">${player.alive ? 'ALIVE' : 'ELIMINATED'}</span>
+        <span class="player-status ${player.alive ? 'alive-tag' : 'dead-tag'}">${player.alive ? 'ALIVE' : 'DEAD'}</span>
+        ${voterChipsHtml}
       </div>
     `;
 
@@ -414,80 +457,231 @@ function handleCardClick(targetPlayer) {
     const chosenPill = $('#night-chosen');
     if (chosenPill) {
       chosenPill.style.display = 'block';
-      chosenPill.textContent = `Action submitted: Target ${targetPlayer.name}`;
+      if (state.role === 'mafia') {
+        chosenPill.textContent = `You will eliminate ${targetPlayer.name} — awaiting dawn`;
+        chosenPill.style.background = 'rgba(185,28,47,0.15)';
+        chosenPill.style.color = '#E02040';
+        chosenPill.style.borderColor = '#B91C2F';
+      } else {
+        chosenPill.textContent = `You are protecting ${targetPlayer.name} tonight`;
+      }
     }
+    // Dim unselected cards
+    $$('.village-card').forEach(c => {
+      c.style.opacity = c.dataset.id === targetPlayer.id ? '1' : '0.45';
+      c.classList.remove('clickable');
+    });
   } else if (state.phase === 'vote') {
     state.votedTargetId = targetPlayer.id;
     socket.emit('castVote', { targetId: targetPlayer.id });
+    $$('.village-card').forEach(c => c.classList.remove('clickable'));
   }
 }
 
-// ── Phase 4: Day & Voting ──
+// ── Phase 4a: Night Result → 5-second suspense → Day ──
 socket.on('nightResult', (data) => {
+  state.pendingDayPhase = true;
+
+  // Set the day screen result text (will show once day loads)
   const resultText = $('#day-result-text');
   if (resultText) {
     if (data.eliminatedPlayer) {
-      resultText.textContent = `Tragedy strikes — ${data.eliminatedPlayer.name} was eliminated during the night.`;
+      resultText.textContent = `${data.eliminatedPlayer.name} was found dead at dawn.`;
     } else if (data.saved) {
-      resultText.textContent = `A miraculous night. The Healer successfully protected their target.`;
+      resultText.textContent = data.protectedName
+        ? `The village wakes safely. ${data.protectedName} was protected by the Healer.`
+        : `The village wakes safely. The Healer shielded someone in the night.`;
     } else {
       resultText.textContent = `A peaceful night. Everyone survived until morning.`;
     }
   }
+
+  // Reuse night screen for countdown
+  const nightTitle = $('#night-title');
+  const nightInstCard = $('#night-instruction-card');
+  const nightChosen = $('#night-chosen');
+  const countdownEl = $('#night-countdown');
+
+  if (nightInstCard) nightInstCard.style.display = 'none';
+  if (nightChosen) nightChosen.style.display = 'none';
+
+  let msg = 'The night draws to a close...';
+  if (data.eliminatedPlayer) msg = `${data.eliminatedPlayer.name} was eliminated in the night...`;
+  else if (data.saved) {
+    msg = data.protectedName
+      ? `${data.protectedName} was saved by the Healer tonight...`
+      : `Someone was saved by the Healer tonight...`;
+  }
+
+  if (nightTitle) nightTitle.textContent = msg;
+
+  let secs = 5;
+  if (countdownEl) {
+    countdownEl.style.display = 'block';
+    countdownEl.textContent = `Dawn breaks in ${secs}...`;
+  }
+
+  const countdownInterval = setInterval(() => {
+    secs--;
+    if (countdownEl) {
+      countdownEl.textContent = secs > 0 ? `Dawn breaks in ${secs}...` : 'Dawn breaks...';
+    }
+    if (secs <= 0) {
+      clearInterval(countdownInterval);
+      state.pendingDayPhase = false;
+      if (countdownEl) countdownEl.style.display = 'none';
+      if (nightInstCard) nightInstCard.style.display = '';
+      showScreen('day');
+      setupDayReadiness();
+    }
+  }, 1000);
 });
+
+function setupDayReadiness() {
+  const readyVoteBtn = $('#btn-ready-vote');
+  if (readyVoteBtn) {
+    readyVoteBtn.disabled = false;
+    readyVoteBtn.innerHTML = `<svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9,11 12,14 22,4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> Ready to Vote`;
+  }
+  const readinessBar = $('#day-readiness-bar');
+  if (readinessBar) readinessBar.style.display = 'none';
+  const dayRound = $('#day-round');
+  if (dayRound) dayRound.textContent = `Round ${state.round}`;
+}
 
 function initDayVoteHandlers() {
   const readyVoteBtn = $('#btn-ready-vote');
   if (readyVoteBtn) {
     readyVoteBtn.addEventListener('click', () => {
       readyVoteBtn.disabled = true;
-      readyVoteBtn.textContent = 'Waiting for others...';
+      readyVoteBtn.innerHTML = `<svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg> Waiting for others...`;
       socket.emit('readyToVote');
     });
   }
 }
+
+socket.on('dayReadyProgress', (data) => {
+  const bar = $('#day-readiness-bar');
+  const fill = $('#day-readiness-fill');
+  const text = $('#day-readiness-text');
+  if (bar) bar.style.display = 'block';
+  if (fill) fill.style.width = `${Math.round((data.readyCount / data.totalCount) * 100)}%`;
+  if (text) text.textContent = `${data.readyCount} of ${data.totalCount} players ready to vote`;
+});
 
 socket.on('voteCountsUpdate', (counts) => {
   state.voteCounts = counts;
   renderVillageGrid();
 });
 
+// ── Phase 4b: Vote Result → chips on cards + host controls ──
 socket.on('voteResult', (data) => {
-  const outcome = $('#vote-result-outcome');
-  const list = $('#vote-breakdown-list');
+  // Build vote chip map: targetId → [voterName, ...]
+  state.voteChips = {};
+  if (data.breakdown) {
+    data.breakdown.forEach(b => {
+      if (!state.voteChips[b.targetId]) state.voteChips[b.targetId] = [];
+      state.voteChips[b.targetId].push(b.voterName);
+    });
+  }
+  state.voteCounts = {};
+  renderVillageGrid();
 
+  // Compact outcome text
+  const outcome = $('#vote-result-outcome');
   if (outcome) {
     if (data.isTie) {
-      outcome.textContent = '🤝 The vote ended in a tie! No player was eliminated today.';
+      outcome.textContent = 'A split vote — no one was eliminated today.';
     } else if (data.eliminatedPlayer) {
-      outcome.textContent = `⚖️ By village vote, ${data.eliminatedPlayer.name} (${data.eliminatedPlayer.role.toUpperCase()}) has been eliminated!`;
+      outcome.textContent = `By village vote, ${data.eliminatedPlayer.name} has been expelled.`;
     }
   }
 
-  if (list && data.breakdown) {
-    list.innerHTML = data.breakdown.map(b => `
-      <div class="breakdown-item">
-        <span>${escapeHtml(b.voterName)}</span>
-        <span>voted for ➔ <strong>${escapeHtml(b.targetName)}</strong></span>
-      </div>
-    `).join('');
-  }
-
+  // Host controls
+  const hostPanel = $('#host-controls-panel');
+  const hostRevealBtn = $('#btn-host-reveal-role');
+  const hostProtectionBtn = $('#btn-host-announce-protection');
   const nextBtn = $('#btn-next-phase');
   const waitMsg = $('#vote-result-wait');
 
   if (state.isHost) {
-    if (nextBtn) nextBtn.style.display = 'inline-block';
+    if (hostPanel) hostPanel.style.display = 'flex';
     if (waitMsg) waitMsg.style.display = 'none';
+
+    // Reveal eliminated role button
+    if (hostRevealBtn) {
+      if (data.eliminatedPlayer) {
+        hostRevealBtn.style.display = 'inline-flex';
+        hostRevealBtn.onclick = () => {
+          socket.emit('hostRevealEliminated');
+          hostRevealBtn.disabled = true;
+          hostRevealBtn.textContent = 'Role Revealed to All';
+        };
+      } else {
+        hostRevealBtn.style.display = 'none';
+      }
+    }
+
+    // Protection announcement button
+    if (hostProtectionBtn) {
+      socket.emit('hostGetProtectionInfo', (res) => {
+        if (res && res.protectedName) {
+          hostProtectionBtn.style.display = 'inline-flex';
+          hostProtectionBtn.textContent = `Announce: ${res.protectedName} was protected`;
+          hostProtectionBtn.onclick = () => {
+            socket.emit('hostAnnounceProtection');
+            hostProtectionBtn.disabled = true;
+            hostProtectionBtn.textContent = 'Announced';
+          };
+        } else {
+          if (hostProtectionBtn) hostProtectionBtn.style.display = 'none';
+        }
+      });
+    }
+
+    // Next phase button with 4-second countdown
+    if (nextBtn) {
+      nextBtn.style.display = 'inline-flex';
+      nextBtn.disabled = true;
+      let secs = 4;
+      nextBtn.textContent = `Proceed to Night (${secs}s)`;
+      const t = setInterval(() => {
+        secs--;
+        if (secs > 0) {
+          nextBtn.textContent = `Proceed to Night (${secs}s)`;
+        } else {
+          clearInterval(t);
+          nextBtn.innerHTML = `Proceed to Night <svg class="btn-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="16" height="16" style="vertical-align:middle;margin-left:4px"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+          nextBtn.disabled = false;
+        }
+      }, 1000);
+    }
   } else {
+    if (hostPanel) hostPanel.style.display = 'none';
     if (nextBtn) nextBtn.style.display = 'none';
     if (waitMsg) waitMsg.style.display = 'block';
+  }
+});
+
+// Host broadcast events received by all players
+socket.on('roleRevealed', (data) => {
+  const outcome = $('#vote-result-outcome');
+  if (outcome) {
+    outcome.textContent = `${data.name} was the ${data.role.toUpperCase()} — the village was ${data.role === 'mafia' ? 'right' : 'wrong'}.`;
+  }
+});
+
+socket.on('protectionAnnounced', (data) => {
+  const resultText = $('#day-result-text');
+  if (resultText && data.name) {
+    resultText.textContent += ` The Healer protected ${data.name} last night.`;
   }
 });
 
 const nextPhaseBtn = $('#btn-next-phase');
 if (nextPhaseBtn) {
   nextPhaseBtn.addEventListener('click', () => {
+    nextPhaseBtn.disabled = true;
     socket.emit('nextPhaseAfterResult');
   });
 }
@@ -545,6 +739,8 @@ socket.on('gameResetToLobby', () => {
   state.selectedTargetId = null;
   state.votedTargetId = null;
   state.voteCounts = {};
+  state.voteChips = {};
+  state.pendingDayPhase = false;
   showScreen('lobby');
 });
 

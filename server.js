@@ -147,13 +147,22 @@ function resolveNightPhase(room) {
   const healedTarget = (livingHealer.length > 0 && livingHealer[0].nightTarget) ? livingHealer[0].nightTarget : null;
 
   let killedPlayer = null;
+  let savedPlayer = null;
+  let protectedName = null;
   if (topMafiaTarget && topMafiaTarget !== healedTarget) {
     const targetP = room.players.find(p => p.id === topMafiaTarget);
     if (targetP && targetP.alive) {
       targetP.alive = false;
       killedPlayer = targetP;
     }
+  } else if (topMafiaTarget && topMafiaTarget === healedTarget) {
+    savedPlayer = room.players.find(p => p.id === healedTarget);
+    protectedName = savedPlayer ? savedPlayer.name : null;
   }
+
+  // Store for host controls
+  room.lastProtectedName = protectedName;
+  room.lastEliminated = killedPlayer || null;
 
   // Clear night targets
   room.players.forEach(p => p.nightTarget = null);
@@ -173,7 +182,8 @@ function resolveNightPhase(room) {
     room.phase = 'day';
     io.to(room.code).emit('nightResult', {
       eliminatedPlayer: killedPlayer ? { id: killedPlayer.id, name: killedPlayer.name } : null,
-      saved: topMafiaTarget && topMafiaTarget === healedTarget
+      saved: !!(topMafiaTarget && topMafiaTarget === healedTarget),
+      protectedName: protectedName
     });
     broadcastRoomState(room);
   }
@@ -212,7 +222,7 @@ function resolveVotingPhase(room) {
     const target = room.players.find(p => p.id === voter.votedFor);
     if (target) {
       tally[target.id] = (tally[target.id] || 0) + 1;
-      breakdown.push({ voterName: voter.name, targetName: target.name });
+    breakdown.push({ voterName: voter.name, voterId: voter.id, targetName: target.name, targetId: target.id });
     }
   });
 
@@ -484,6 +494,30 @@ io.on('connection', (socket) => {
     io.to(code).emit('voteCountsUpdate', voteCounts);
 
     autoProcessBotVotes(room);
+  });
+
+  socket.on('hostRevealEliminated', () => {
+    const code = socket.roomCode;
+    const room = rooms[code];
+    if (!room || room.hostId !== socket.id) return;
+    const elim = room.lastEliminated;
+    if (elim) {
+      io.to(code).emit('roleRevealed', { name: elim.name, role: elim.role });
+    }
+  });
+
+  socket.on('hostGetProtectionInfo', (callback) => {
+    const code = socket.roomCode;
+    const room = rooms[code];
+    if (!room) return callback({ protectedName: null });
+    callback({ protectedName: room.lastProtectedName || null });
+  });
+
+  socket.on('hostAnnounceProtection', () => {
+    const code = socket.roomCode;
+    const room = rooms[code];
+    if (!room || room.hostId !== socket.id) return;
+    io.to(code).emit('protectionAnnounced', { name: room.lastProtectedName || null });
   });
 
   socket.on('nextPhaseAfterResult', () => {

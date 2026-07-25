@@ -157,6 +157,7 @@
         <div class="night-header">
           <h2 id="night-title">Night Falls on the Village</h2>
           <p id="night-round" class="round-label">Round 1</p>
+          <p id="night-countdown" class="night-countdown-text" style="display:none;"></p>
         </div>
 
         <!-- Dedicated Night Action Instruction Card -->
@@ -213,12 +214,22 @@
     <!-- ── Vote Result Screen ── -->
     <div id="screen-vote-result" class="screen">
       <div class="vote-result-card">
-        <h2>Vote Results &amp; Trial Outcome</h2>
+        <h2>Village Verdict</h2>
         <p id="vote-result-outcome" class="outcome-headline"></p>
 
-        <div class="breakdown-section">
-          <h3>Voting Breakdown</h3>
-          <div id="vote-breakdown-list" class="breakdown-list"></div>
+        <!-- Host-only controls -->
+        <div id="host-controls-panel" class="host-controls-panel" style="display:none;">
+          <span class="host-controls-label">HOST CONTROLS</span>
+          <div class="host-controls-buttons">
+            <button id="btn-host-reveal-role" class="btn-host-ctrl" style="display:none;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              Reveal Eliminated Role
+            </button>
+            <button id="btn-host-announce-protection" class="btn-host-ctrl" style="display:none;">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Announce Protection
+            </button>
+          </div>
         </div>
 
         <button id="btn-next-phase" class="btn btn-primary btn-large btn-full" style="display:none;">
@@ -266,10 +277,18 @@
               <stop offset="0%" stop-color="#E8B83A" stop-opacity="0.14"/>
               <stop offset="100%" stop-color="#E8B83A" stop-opacity="0"/>
             </radialGradient>
+            <!-- Warm amber day sky gradient -->
+            <linearGradient id="vg-day-sky" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#1A0C04"/>
+              <stop offset="45%" stop-color="#3B1B08"/>
+              <stop offset="100%" stop-color="#5E2A0A"/>
+            </linearGradient>
           </defs>
 
           <!-- ── Sky ── -->
           <rect class="vg-sky" width="1200" height="160"/>
+          <!-- Day: warm amber sky (shows on day class) -->
+          <rect class="vg-day-sky-layer" width="1200" height="160" fill="url(#vg-day-sky)"/>
 
           <!-- Night: moon ambient, crescent, stars -->
           <rect class="vg-night-layer" width="1200" height="160" fill="url(#vg-moon-halo)"/>
