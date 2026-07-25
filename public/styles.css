@@ -609,27 +609,37 @@ body.night .village-card {
 }
 
 .player-avatar {
-  width: 52px;
-  height: 52px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   background: transparent;
-  color: var(--text);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.5rem;
   position: relative;
+  transition: transform 0.2s ease;
+}
+
+.village-card:hover .player-avatar {
+  transform: scale(1.08);
 }
 
 .avatar-svg {
-  width: 52px;
-  height: 52px;
+  width: 60px;
+  height: 60px;
   display: block;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
 }
 
 .dead-ghost-svg {
-  color: var(--text-dim);
-  opacity: 0.6;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+  animation: floatGhost 3s infinite alternate ease-in-out;
+}
+
+@keyframes floatGhost {
+  0% { transform: translateY(0px); }
+  100% { transform: translateY(-4px); }
 }
 
 .village-card .player-name {
