@@ -366,11 +366,11 @@ input[type="text"]:focus {
 
 .role-card-display {
   width: 100%;
-  background: #1B1832;
-  border: 3px solid var(--card-border);
-  border-radius: var(--radius-md);
-  padding: 10px;
-  box-shadow: var(--shadow-lg);
+  background: #FFFFFF !important;
+  border: 3.5px solid var(--slate-blue) !important;
+  border-radius: var(--radius-md) !important;
+  padding: 10px !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45) !important;
 }
 .role-card-img-large {
   width: 100%;
@@ -379,6 +379,7 @@ input[type="text"]:focus {
   object-fit: contain;
   border-radius: 10px;
   display: block;
+  background: #FFFFFF;
 }
 
 .role-instruction-panel {
@@ -616,14 +617,15 @@ input[type="text"]:focus {
 
 .card-character-hero {
   width: 100%;
-  background: #1B1832 !important;
-  border: 2.5px solid var(--card-border) !important;
+  background: #FFFFFF !important;
+  border: 2.5px solid var(--slate-blue) !important;
   border-radius: 14px !important;
   padding: 6px !important;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+  transition: transform var(--speed), border-color var(--speed);
 }
 
 .card-hero-img {
@@ -633,6 +635,7 @@ input[type="text"]:focus {
   object-fit: contain;
   border-radius: 10px;
   display: block;
+  background: #FFFFFF;
 }
 
 .card-info-bar {
