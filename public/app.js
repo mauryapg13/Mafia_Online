@@ -168,28 +168,42 @@ function setupNightScreen(roundData) {
   const isMeAlive = me ? me.alive : false;
 
   if ($('#night-round')) $('#night-round').textContent = `Round ${roundData.round || 1}`;
+  if ($('#night-chosen')) $('#night-chosen').style.display = 'none';
+
+  const role = state.role || 'villager';
+  const roleBadge = $('#night-role-badge');
+  const actionTitle = $('#night-action-title');
+  const actionDesc = $('#night-action-desc');
+  const cardBox = $('#night-instruction-card');
+
+  if (cardBox) {
+    cardBox.className = `action-instruction-card role-${role}`;
+  }
 
   if (roundData.firstNightSkipped) {
-    $('#night-sleep').style.display = 'none';
-    $('#night-choose').style.display = 'none';
-    $('#night-skip').style.display = 'block';
+    if (roleBadge) roleBadge.textContent = '🌙 Peaceful Night';
+    if (actionTitle) actionTitle.textContent = 'First Night Skip';
+    if (actionDesc) actionDesc.textContent = 'The first night passes peacefully. No targets may be selected tonight.';
+    renderVillageGrid();
     return;
   }
-  $('#night-skip').style.display = 'none';
 
-  if (!isMeAlive || state.role === 'villager') {
-    $('#night-sleep').style.display = 'block';
-    $('#night-choose').style.display = 'none';
+  if (!isMeAlive) {
+    if (roleBadge) roleBadge.textContent = '👻 Spectator';
+    if (actionTitle) actionTitle.textContent = 'You are Eliminated';
+    if (actionDesc) actionDesc.textContent = 'You are watching the night actions from beyond as a spirit.';
+  } else if (role === 'mafia') {
+    if (roleBadge) roleBadge.textContent = '🕵️ Mafia Objective';
+    if (actionTitle) actionTitle.textContent = 'Select Night Target';
+    if (actionDesc) actionDesc.textContent = 'Click any player card below to select your target for elimination. Fellow Mafia members will see your choice in real time.';
+  } else if (role === 'healer') {
+    if (roleBadge) roleBadge.textContent = '🩺 Healer Objective';
+    if (actionTitle) actionTitle.textContent = 'Protect a Player';
+    if (actionDesc) actionDesc.textContent = 'Click any player card below to shield them from elimination tonight.';
   } else {
-    $('#night-sleep').style.display = 'none';
-    $('#night-choose').style.display = 'block';
-
-    const prompt = $('#night-prompt');
-    if (state.role === 'mafia') {
-      prompt.textContent = 'Select a village player to eliminate tonight:';
-    } else if (state.role === 'healer') {
-      prompt.textContent = 'Select a player to protect tonight:';
-    }
+    if (roleBadge) roleBadge.textContent = '🌙 Village Sleep';
+    if (actionTitle) actionTitle.textContent = 'The Village Sleeps';
+    if (actionDesc) actionDesc.textContent = 'Close your eyes and rest. Pray the Healer protects the innocent until morning.';
   }
 
   renderVillageGrid();
@@ -631,55 +645,56 @@ function getCharacterAvatarHtml(role, alive = true) {
 const getCharacterAvatarSvg = getCharacterAvatarHtml;
 
 function setupRoleCard() {
-  const card = $('#role-card');
-  if (!card) return;
+  const cardHero = $('#role-card-hero');
+  if (!cardHero) return;
 
-  card.classList.remove('flipped');
-  $('#btn-role-ack').style.display = 'none';
-  $('#role-waiting').style.display = 'none';
+  cardHero.classList.remove('flipped');
+  if ($('#btn-role-ack')) $('#btn-role-ack').style.display = 'inline-block';
+  if ($('#role-waiting')) $('#role-waiting').style.display = 'none';
 
   const role = state.role || 'villager';
   const roleNameEl = $('#role-name');
   const roleTeamEl = $('#role-team');
   const roleDescEl = $('#role-description');
   const roleAlliesEl = $('#role-mafia-allies');
-  const roleIconEl = $('#role-icon');
+  const alliesBox = $('#role-mafia-allies-box');
+  const heroImgWrap = $('#role-hero-img-wrap');
 
   roleNameEl.textContent = role.charAt(0).toUpperCase() + role.slice(1);
-  roleNameEl.className = `role-name ${role}`;
+  roleNameEl.className = `role-name role-text-${role}`;
 
-  if (roleIconEl) {
-    roleIconEl.className = `role-icon role-${role}`;
-    roleIconEl.innerHTML = getCharacterAvatarSvg(role, true);
+  if (heroImgWrap) {
+    heroImgWrap.innerHTML = getCharacterAvatarHtml(role, true);
   }
 
   if (role === 'mafia') {
-    roleTeamEl.textContent = 'Team Mafia';
-    roleDescEl.textContent = 'Eliminate the villagers without getting caught.';
-    if (state.mafiaMembers.length > 0) {
-      roleAlliesEl.textContent = 'Fellow Mafia: ' + state.mafiaMembers.map(m => m.name).join(', ');
+    roleTeamEl.textContent = 'Team Mafia 🕵️';
+    roleTeamEl.className = 'role-team-pill team-mafia';
+    roleDescEl.textContent = 'Eliminate the villagers during the night without getting caught during daytime votes.';
+    if (alliesBox) alliesBox.style.display = 'block';
+    if (state.mafiaMembers && state.mafiaMembers.length > 0) {
+      roleAlliesEl.textContent = state.mafiaMembers.map(m => m.name).join(', ');
     } else {
-      roleAlliesEl.textContent = 'You are the solo Mafia.';
+      roleAlliesEl.textContent = 'You are operating as solo Mafia.';
     }
   } else if (role === 'healer') {
-    roleTeamEl.textContent = 'Team Village';
-    roleDescEl.textContent = 'Protect one player each night from elimination.';
-    roleAlliesEl.textContent = '';
+    roleTeamEl.textContent = 'Team Village 🩺';
+    roleTeamEl.className = 'role-team-pill team-village';
+    roleDescEl.textContent = 'Choose one player each night to protect from Mafia elimination.';
+    if (alliesBox) alliesBox.style.display = 'none';
   } else {
-    roleTeamEl.textContent = 'Team Village';
-    roleDescEl.textContent = 'Find and eliminate the Mafia in daytime discussions.';
-    roleAlliesEl.textContent = '';
+    roleTeamEl.textContent = 'Team Village 👨‍🌾';
+    roleTeamEl.className = 'role-team-pill team-village';
+    roleDescEl.textContent = 'Discuss during the day to identify and vote out the hidden Mafia members.';
+    if (alliesBox) alliesBox.style.display = 'none';
   }
 }
 
 function initRoleScreenHandlers() {
-  const card = $('#role-card');
-  if (card) {
-    card.addEventListener('click', () => {
-      card.classList.toggle('flipped');
-      if (card.classList.contains('flipped')) {
-        $('#btn-role-ack').style.display = 'inline-block';
-      }
+  const cardHero = $('#role-card-hero');
+  if (cardHero) {
+    cardHero.addEventListener('click', () => {
+      cardHero.classList.toggle('flipped');
     });
   }
 
@@ -687,12 +702,11 @@ function initRoleScreenHandlers() {
   if (ackBtn) {
     ackBtn.addEventListener('click', () => {
       ackBtn.style.display = 'none';
-      $('#role-waiting').style.display = 'block';
+      if ($('#role-waiting')) $('#role-waiting').style.display = 'block';
       $('#role-waiting').textContent = 'Waiting for other players...';
       socket.emit('roleAcknowledged');
     });
   }
-
   const startBtn = $('#btn-start-game');
   if (startBtn) {
     startBtn.addEventListener('click', () => {

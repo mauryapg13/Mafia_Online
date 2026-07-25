@@ -145,24 +145,44 @@
 
     <!-- ── Role Reveal Screen ── -->
     <div id="screen-role" class="screen">
-      <div class="role-wrapper">
-        <h2>Your Role</h2>
-        <div id="role-card" class="role-card">
+      <div class="role-reveal-container">
+        <!-- Left: Large Hero Playing Card -->
+        <div id="role-card-hero" class="role-card-hero">
           <div class="role-card-inner">
             <div class="role-card-front">
-              <p>Tap to reveal</p>
+              <div class="card-back-decor">
+                <span class="card-mystery-icon">🃏</span>
+                <p>Tap card to reveal role</p>
+              </div>
             </div>
             <div class="role-card-back">
-              <div class="role-icon" id="role-icon"></div>
-              <h3 id="role-name" class="role-name"></h3>
-              <p id="role-team" class="role-team"></p>
-              <p id="role-description" class="role-description"></p>
-              <p id="role-mafia-allies" class="role-allies"></p>
+              <div id="role-hero-img-wrap" class="role-hero-img-wrap">
+                <!-- Large cropped playing card image inserted dynamically -->
+              </div>
             </div>
           </div>
         </div>
-        <button id="btn-role-ack" class="btn btn-primary" style="display:none;">I understand my role</button>
-        <p id="role-waiting" class="waiting-text" style="display:none;">Waiting for other players...</p>
+
+        <!-- Right: Instructions Panel -->
+        <div id="role-instruction-panel" class="role-instruction-panel">
+          <h2 class="reveal-title">Your Secret Role</h2>
+          <div class="role-badge-box">
+            <h3 id="role-name" class="role-name"></h3>
+            <span id="role-team" class="role-team-pill"></span>
+          </div>
+
+          <div class="instruction-box">
+            <h4>Role Instructions & Mission</h4>
+            <p id="role-description" class="role-description-text"></p>
+            <div id="role-mafia-allies-box" class="allies-box" style="display:none;">
+              <h5>Fellow Mafia Members</h5>
+              <p id="role-mafia-allies" class="role-allies-text"></p>
+            </div>
+          </div>
+
+          <button id="btn-role-ack" class="btn btn-primary btn-large">I Understand My Role ➔</button>
+          <p id="role-waiting" class="waiting-text" style="display:none;">Waiting for other players...</p>
+        </div>
       </div>
     </div>
 
@@ -181,7 +201,6 @@
           </div>
           <div class="village-houses-silhouette">
             <svg viewBox="0 0 200 40" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <!-- House Silhouettes -->
               <path d="M10 40V24L22 14L34 24V40H10Z" fill="rgba(255,255,255,0.06)"/>
               <path d="M45 40V20L60 10L75 20V40H45Z" fill="rgba(255,255,255,0.09)"/>
               <path d="M90 40V26L105 16L120 26V40H90Z" fill="rgba(255,255,255,0.06)"/>
@@ -196,19 +215,14 @@
           <p id="night-round" class="round-label"></p>
         </div>
 
-        <div id="night-action-area" class="night-action-area">
-          <div id="night-sleep" class="night-sleep" style="display:none;">
-            <p class="sleep-text">The village sleeps. Close your eyes and wait for dawn.</p>
+        <!-- Separate Instruction & Action Box for Mafia / Healer / Villagers -->
+        <div id="night-instruction-card" class="action-instruction-card">
+          <div class="action-card-header">
+            <span id="night-role-badge" class="action-role-badge"></span>
+            <h3 id="night-action-title">Night Action</h3>
           </div>
-
-          <div id="night-choose" class="night-choose" style="display:none;">
-            <p id="night-prompt" class="night-prompt-text"></p>
-            <p id="night-chosen" class="chosen-text" style="display:none;"></p>
-          </div>
-
-          <div id="night-skip" class="night-skip" style="display:none;">
-            <p>The first night passes quietly. No one may be harmed tonight.</p>
-          </div>
+          <p id="night-action-desc" class="action-desc-text"></p>
+          <div id="night-chosen" class="chosen-status-pill" style="display:none;"></div>
         </div>
       </div>
     </div>
